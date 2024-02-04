@@ -128,7 +128,15 @@ connection_parameters = {
         'port': '5433'
 }
 
+creation_params = {
+        'dbname': 'questionnaire_postgres',
+        'user': 'postgres',
+        'password': 'root',
+        'host': '127.0.0.1',
+        'port': '5433'
+}
 
-execute_db_creation(connection_parameters, database_name)
+
+execute_db_creation(creation_params, database_name)
 execute_tables_creation(connection_parameters)
 execute_index_creation(connection_parameters)
