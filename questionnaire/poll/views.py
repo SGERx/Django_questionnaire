@@ -20,3 +20,8 @@ def poll_list(request):
 def poll_detail(request, pk):
     template = loader.get_template('poll/poll_detail.html')
     return HttpResponse(template.render({}, request))
+
+
+# Админка
+def admin(request):
+    return HttpResponse("Заглушка под переход в админку")
