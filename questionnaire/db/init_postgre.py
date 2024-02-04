@@ -69,6 +69,18 @@ def execute_tables_creation(connection_parameters):
         );'''
         cursor.execute(create_questions_query)
 
+
+        create_answer_options_query = '''CREATE TABLE IF NOT EXISTS answer_options(
+        id serial PRIMARY KEY,
+        question_id INT NOT NULL,
+        option_text TEXT NOT NULL,
+        created_on TIMESTAMP NOT NULL,
+        redacted TIMESTAMP,
+        CONSTRAINT fk_question FOREIGN KEY (question_id) REFERENCES questions (id)
+        );'''
+        cursor.execute(create_answer_options_query)
+
+
         create_answers_query = '''CREATE TABLE IF NOT EXISTS answers(
         id serial PRIMARY KEY,
         participants_id INT NOT NULL,
@@ -114,6 +126,9 @@ def execute_index_creation(connection_parameters):
         cursor.execute(create_answers_index_users_id)
         create_answers_index_question_id = '''CREATE INDEX IF NOT EXISTS idx_answers_question_id ON answers(question_id);'''
         cursor.execute(create_answers_index_question_id)
+        create_answers_options_index_question_id = '''CREATE INDEX IF NOT EXISTS idx_answer_options_question_id ON answer_options(question_id);'''
+        cursor.execute(create_answers_options_index_question_id)
+
         connection.commit()
 
     except Exception as e:
@@ -144,3 +159,9 @@ creation_params = {
 execute_db_creation(creation_params, database_name)
 execute_tables_creation(connection_parameters)
 execute_index_creation(connection_parameters)
+
+
+
+
+
+
