@@ -9,5 +9,4 @@ urlpatterns = [
     path('polls/<int:pk>/', views.poll_detail, name='poll_details'),
     # path('questions/', views.poll_list, name='questions_page'),
     path('questions/<int:pk>/', views.poll_detail, name='question_details'),
-    path('admin/', views.admin, name='admin'),
 ]
