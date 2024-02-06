@@ -14,7 +14,7 @@ class Participant(models.Model):
         db_table = 'participants'
 
 
-class Poll(models.Model):
+class Survey(models.Model):
     title = models.CharField(max_length=50, unique=True)
     description = models.TextField()
     participants = models.IntegerField(default=0)
@@ -23,13 +23,14 @@ class Poll(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'polls'
+        db_table = 'surveys'
 
 
 class Question(models.Model):
-    poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
+    survey = models.ForeignKey(Survey, on_delete=models.CASCADE)
     participants = models.IntegerField(default=0)
-    answered_rating = models.IntegerField(default=0)
+    answered_quantity = models.IntegerField(default=0)
+    answered_rating = models.DecimalField(max_digits=5, decimal_places=2)
     question_text = models.TextField()
     created_on = models.DateTimeField(auto_now_add=True)
     redacted = models.DateTimeField(null=True, blank=True)
@@ -51,7 +52,7 @@ class AnswerOption(models.Model):
 
 
 class Answer(models.Model):
-    participant = models.ForeignKey(Participant, on_delete=models.CASCADE)
+    participants_id = models.ForeignKey(Participant, db_column='participants_id', on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     response_text = models.TextField(null=True, blank=True)
     response_date = models.DateTimeField(auto_now_add=True)
@@ -59,3 +60,12 @@ class Answer(models.Model):
     class Meta:
         managed = False
         db_table = 'answers'
+
+
+class QuestionRelation(models.Model):
+    parent_question = models.ForeignKey(Question, related_name='parent_question', on_delete=models.CASCADE)
+    child_question = models.ForeignKey(Question, related_name='child_question', on_delete=models.CASCADE)
+
+    class Meta:
+        managed = False
+        db_table = 'question_relations'

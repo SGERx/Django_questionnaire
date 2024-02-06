@@ -6,19 +6,19 @@ from django.template import loader
 
 # Главная страница
 def index(request):
-    template = loader.get_template('poll/index.html')
+    template = loader.get_template('survey/index.html')
     return HttpResponse(template.render({}, request))
 
 
 # Список опросов
-def poll_list(request):
-    template = loader.get_template('poll/polls.html')
+def survey_list(request):
+    template = loader.get_template('survey/surveys.html')
     return HttpResponse(template.render({}, request))
 
 
 # Детали опроса
-def poll_detail(request, pk):
-    template = loader.get_template('poll/poll_detail.html')
+def survey_detail(request, pk):
+    template = loader.get_template('survey/survey_detail.html')
     return HttpResponse(template.render({}, request))
 
 
