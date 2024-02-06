@@ -14,6 +14,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'home'
+
 
 INSTALLED_APPS = [
     'survey.apps.SurveyConfig',
@@ -40,7 +43,7 @@ ROOT_URLCONF = 'questionnaire.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'templates'), os.path.join(BASE_DIR, 'questionnaire', 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

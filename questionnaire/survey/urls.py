@@ -1,9 +1,11 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 from django.contrib import admin
 
 urlpatterns = [
     path('', views.index, name='main_page'),
+    # path('login/', views.login_page, name='login'),
+    path('accounts/', include('django.contrib.auth.urls')),
     path('home/', views.index, name='main_page'),
     path('index/', views.index, name='main_page'),
     path('surveys/admin/', admin.site.urls),
