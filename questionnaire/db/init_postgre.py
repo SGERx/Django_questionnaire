@@ -41,7 +41,7 @@ def execute_custom_tables_creation(connection_parameters):
         create_users_query = '''CREATE TABLE IF NOT EXISTS participants(
         id serial PRIMARY KEY,
         username VARCHAR (30) UNIQUE NOT NULL,
-        password_hash VARCHAR(255) NOT NULL,
+        password VARCHAR(255) NOT NULL,
         password_salt VARCHAR(255) NOT NULL,
         email VARCHAR (30) UNIQUE NOT NULL,
         created_on TIMESTAMP NOT NULL,
@@ -72,8 +72,8 @@ def execute_custom_tables_creation(connection_parameters):
         create_questions_query = '''CREATE TABLE IF NOT EXISTS questions(
         id serial PRIMARY KEY,
         survey_id INT NOT NULL,
-        title VARCHAR (50) UNIQUE NOT NULL,
-        participants INT DEFAULT 0 NOT NULL,
+        title VARCHAR (50) NOT NULL,
+        participants_rating INT DEFAULT 0 NOT NULL,
         answered_quantity INT DEFAULT 0 NOT NULL,
         answered_rating DECIMAL(5, 2) DEFAULT 0 NOT NULL,
         question_text TEXT,
@@ -93,6 +93,7 @@ def execute_custom_tables_creation(connection_parameters):
         id serial PRIMARY KEY,
         parent_question_id INT NOT NULL,
         child_question_id INT NOT NULL,
+        response_condition VARCHAR(255),
         FOREIGN KEY (parent_question_id) REFERENCES questions(id),
         FOREIGN KEY (child_question_id) REFERENCES questions(id)
         );'''
@@ -117,9 +118,9 @@ def execute_custom_tables_creation(connection_parameters):
     except Exception as e:
         connection.rollback()
         print(f"Error: {e}")
-    print("answers")
+    print("user_answers")
     try:
-        create_answers_query = '''CREATE TABLE IF NOT EXISTS answers(
+        create_user_answers_query = '''CREATE TABLE IF NOT EXISTS user_answers(
         id serial PRIMARY KEY,
         participants_id INT NOT NULL,
         question_id INT NOT NULL,
@@ -128,12 +129,11 @@ def execute_custom_tables_creation(connection_parameters):
         CONSTRAINT fk_participants FOREIGN KEY (participants_id) REFERENCES participants (id),
         CONSTRAINT fk_questions FOREIGN KEY (question_id) REFERENCES questions (id)
         );'''
-        cursor.execute(create_answers_query)
-        print("answers - created")
+        cursor.execute(create_user_answers_query)
+        print("user_answers - created")
     except Exception as e:
         connection.rollback()
         print(f"Error: {e}")
-
     finally:
         connection.commit()
         connection.close()
@@ -160,12 +160,12 @@ def execute_index_creation(connection_parameters):
         create_question_index_question_surveys_id = '''CREATE INDEX IF NOT EXISTS idx_questions_survey_id ON questions(survey_id);'''
         cursor.execute(create_question_index_question_surveys_id)
 
-        create_answers_index_users_id = '''CREATE INDEX IF NOT EXISTS idx_answers_participants_id ON answers(participants_id);'''
-        cursor.execute(create_answers_index_users_id)
-        create_answers_index_question_id = '''CREATE INDEX IF NOT EXISTS idx_answers_question_id ON answers(question_id);'''
-        cursor.execute(create_answers_index_question_id)
-        create_answers_options_index_question_id = '''CREATE INDEX IF NOT EXISTS idx_answer_options_question_id ON answer_options(question_id);'''
-        cursor.execute(create_answers_options_index_question_id)
+        create_user_answers_index_users_id = '''CREATE INDEX IF NOT EXISTS idx_user_answers_participants_id ON answers(participants_id);'''
+        cursor.execute(create_user_answers_index_users_id)
+        create_user_answers_index_question_id = '''CREATE INDEX IF NOT EXISTS idx_user_answers_question_id ON answers(question_id);'''
+        cursor.execute(create_user_answers_index_question_id)
+        create_user_answers_options_index_question_id = '''CREATE INDEX IF NOT EXISTS idx_answer_options_question_id ON answer_options(question_id);'''
+        cursor.execute(create_user_answers_options_index_question_id)
 
         connection.commit()
 

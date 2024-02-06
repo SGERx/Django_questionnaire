@@ -22,7 +22,7 @@ else:
     print("Файл settings.py не найден. Убедитесь, что путь к файлу верен.")
 
 
-default_values = input("Использовать значения по умолчанию для создания администратора Django? [Y/n] ")
+default_values = input("Использовать значения по умолчанию для создания администратора Django? [y/n] ")
 if default_values.upper() == 'Y':
     print("логин - admin, пароль - admin")
     admin_name = 'admin'
