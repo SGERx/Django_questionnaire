@@ -3,6 +3,11 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.template import loader
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from .models import Participant
+from .forms import LoginForm, RegistrationForm
+import bcrypt
+from django.contrib.auth import authenticate, login, logout
 
 
 # Главная страница
@@ -26,7 +31,44 @@ def survey_detail(request, pk):
     return HttpResponse(template.render({}, request))
 
 
-# @login_required
-# def login_page(request):
-#     template = loader.get_template('survey/login_page.html')
-#     return HttpResponse(template.render({}, request))
+def register_view(request):
+    if request.method == 'POST':
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            email = form.cleaned_data['email']
+
+            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+            user = Participant(username=username, password=hashed_password.decode('utf-8'), email=email)
+            user.save()
+
+            return redirect('login')
+    else:
+        form = RegistrationForm()
+
+    return render(request, 'register.html', {'form': form})
+
+
+def login_view(request):
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            user = Participant.objects.filter(username=username).first()
+            if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+                login(request, user)
+                return redirect('home')
+            else:
+                return render(request, 'login.html', {'form': form, 'error_message': 'Invalid username or password'})
+    else:
+        form = LoginForm()
+
+    return render(request, 'login.html', {'form': form})
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')

@@ -12,6 +12,12 @@
             <a class="me-3 py-2 link-body-emphasis text-decoration-none" href="{% url 'main_page' %}">Статистика</a> {% endcomment %}
             {% comment %}<a class="me-3 py-2 link-body-emphasis text-decoration-none" href="{% url 'question_details' question.pk %}">Вопрос</a> {% endcomment %}
             <a class="me-3 py-2 link-body-emphasis text-decoration-none" href="admin/">ADMIN_PANEL</a>
+            {% if user.is_authenticated %}
+            <a class="me-3 py-2 link-body-emphasis text-decoration-none" href="{% url 'logout' %}">Logout</a>
+            {% else %}
+            <a class="me-3 py-2 link-body-emphasis text-decoration-none" href="{% url 'login' %}">Login</a>
+            <a class="me-3 py-2 link-body-emphasis text-decoration-none" href="{% url 'register' %}">Register</a>
+            {% endif %}
             {% comment %} <a class="me-3 py-2 link-body-emphasis text-decoration-none" href="{% url 'main_page' %}">FAQs</a> {% endcomment %}
           </nav>
     </div>
