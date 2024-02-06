@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
 
 class Participant(models.Model):
@@ -13,6 +14,9 @@ class Participant(models.Model):
         managed = False
         db_table = 'participants'
 
+    def __str__(self):
+        return self.username
+
 
 class Survey(models.Model):
     title = models.CharField(max_length=50, unique=True)
@@ -25,12 +29,16 @@ class Survey(models.Model):
         managed = False
         db_table = 'surveys'
 
+    def __str__(self):
+        return self.title
+
 
 class Question(models.Model):
     survey = models.ForeignKey(Survey, on_delete=models.CASCADE)
+    title = models.CharField(max_length=50, unique=True)
     participants = models.IntegerField(default=0)
     answered_quantity = models.IntegerField(default=0)
-    answered_rating = models.DecimalField(max_digits=5, decimal_places=2)
+    answered_rating = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     question_text = models.TextField()
     created_on = models.DateTimeField(auto_now_add=True)
     redacted = models.DateTimeField(null=True, blank=True)
@@ -38,6 +46,9 @@ class Question(models.Model):
     class Meta:
         managed = False
         db_table = 'questions'
+
+    def __str__(self):
+        return self.title
 
 
 class AnswerOption(models.Model):

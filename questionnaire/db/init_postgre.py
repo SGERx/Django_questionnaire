@@ -72,6 +72,7 @@ def execute_custom_tables_creation(connection_parameters):
         create_questions_query = '''CREATE TABLE IF NOT EXISTS questions(
         id serial PRIMARY KEY,
         survey_id INT NOT NULL,
+        title VARCHAR (50) UNIQUE NOT NULL,
         participants INT DEFAULT 0 NOT NULL,
         answered_quantity INT DEFAULT 0 NOT NULL,
         answered_rating DECIMAL(5, 2) DEFAULT 0 NOT NULL,
