@@ -70,7 +70,9 @@ def survey_detail(request, pk):
         'question_data': [
             {'survey_id': question[1], 'question_id': question[0], 'title': question[2],
              'answered_quantity': question[3], 'answered_rating': question[4],
-             'question_text': question[5], 'created_on': question[6], 'redacted': question[7]}
+             'question_text': question[5], 'answer_option_1': question[6],
+        'answer_option_2': question [7], 'answer_option_3': question[8],
+        'answer_option_4': question[9],'created_on': question[10], 'redacted': question[11]}
             for question in question_data
         ],
     }

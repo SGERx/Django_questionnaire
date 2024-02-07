@@ -10,9 +10,13 @@
         <th>id опроса</th>
         <th>id вопроса</th>
         <th>заголовок вопроса</th>
+        <th>текст вопроса</th>
+        <th>первый вариант ответа</th>
+        <th>второй вариант ответа</th>
+        <th>третий вариант ответа</th>
+        <th>четвертый вариант ответа</th>
         <th>Ответивших</th>
         <th>Процент ответивших</th>
-        <th>текст вопроса</th>
         <th>создан</th>
         <th>изменен</th>
       </tr>
@@ -23,9 +27,13 @@
             <td>{{question.survey_id}}</td>
             <td>{{question.question_id}}</td>
             <td>{{question.title}}</td>
+            <td>{{question.question_text}}</td>
+            <td>{{question.answer_option_1}}</td>
+            <td>{{question.answer_option_2}}</td>
+            <td>{{question.answer_option_3}}</td>
+            <td>{{question.answer_option_4}}</td>
             <td>{{question.answered_quantity}}</td>
             <td>{{question.answered_rating}}</td>
-            <td>{{question.question_text}}</td>
             <td>{{question.created_on}}</td>
             <td>{{question.redacted}}</td>
           </tr>
