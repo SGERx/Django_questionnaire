@@ -34,8 +34,8 @@ class QuestionRelationAdmin(admin.ModelAdmin):
 
 @admin.register(UserAnswer)
 class UserAnswerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'auth_user_id', 'question_id', 'response_text', 'response_date')
-    search_fields = ('response_text',)
+    list_display = ('id', 'auth_user_id', 'question_id', 'selected_option', 'response_date')
+    search_fields = ('selected_option',)
 
 
 class MyUserCreationForm(UserCreationForm):

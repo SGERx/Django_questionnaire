@@ -11,6 +11,7 @@ from django.contrib.auth import authenticate, login, logout
 from psycopg2 import sql
 import psycopg2
 from django.db import connection
+from datetime import datetime
 
 
 connection_params = {
@@ -55,30 +56,67 @@ def survey_list(request):
 # Детали опроса
 @login_required
 def survey_detail(request, pk):
-    form = QuestionResponseForm()
+
     conn = psycopg2.connect(**connection_params)
     cursor = conn.cursor()
-    query = f'SELECT * FROM questions WHERE survey_id={pk}'
+    query = 'SELECT * FROM questions WHERE id IN (SELECT MIN(id) from questions WHERE id NOT IN (SELECT id FROM user_answers))'
     cursor.execute(query)
-    question_data = cursor.fetchall()
+    question_data = cursor.fetchone()
     cursor.close()
     conn.close()
-    print(question_data)
-    for question in question_data:
-        print(question)
+
+    options = [
+        (str(i + 1), question_data[6 + i]) for i in range(4)
+    ]
+
+    form = QuestionResponseForm(request.POST if request.method == 'POST' else None, options=options)
     context = {
-        'question_data': [
-            {'survey_id': question[1], 'question_id': question[0], 'title': question[2],
-             'answered_quantity': question[3], 'answered_rating': question[4],
-             'question_text': question[5], 'answer_option_1': question[6],
-        'answer_option_2': question[7], 'answer_option_3': question[8],
-        'answer_option_4': question[9], 'created_on': question[10], 'redacted': question[11]}
-            for question in question_data
-        ],
+        'question_data': {
+            'survey_id': question_data[1],
+            'question_id': question_data[0],
+            'title': question_data[2],
+            'answered_quantity': question_data[3],
+            'answered_rating': question_data[4],
+            'question_text': question_data[5],
+            'answer_option_1': question_data[6],
+            'answer_option_2': question_data[7],
+            'answer_option_3': question_data[8],
+            'answer_option_4': question_data[9],
+            'created_on': question_data[10],
+            'redacted': question_data[11],
+        },
         'form': form,
     }
 
+    if request.method == 'POST':
+        if form.is_valid():
+            selected_option = form.cleaned_data['selected_option']
+
+            with psycopg2.connect(**connection_params) as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute('''
+                        INSERT INTO user_answers (auth_user_id, question_id, selected_option, response_date)
+                        VALUES (%s, %s, %s, %s)
+                    ''', [request.user.id, question_data[0], selected_option, datetime.now()])
+
+            with psycopg2.connect(**connection_params) as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute('''
+                        SELECT * FROM questions
+                        WHERE id IN (
+                            SELECT MIN(id) FROM questions
+                            WHERE id NOT IN (SELECT id FROM user_answers WHERE auth_user_id = %s)
+                        )
+                    ''', [request.user.id])
+                    next_question_data = cursor.fetchone()
+
+            return redirect('survey_detail', pk=pk)
+
     return render(request, 'survey/survey_detail.html', context)
+
+
+def statistics_detail(request):
+    return render('statistics.html')
 
 
 def register_view(request):

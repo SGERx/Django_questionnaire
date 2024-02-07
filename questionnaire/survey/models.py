@@ -53,7 +53,7 @@ class QuestionRelation(models.Model):
 class UserAnswer(models.Model):
     auth_user_id = models.ForeignKey(User, on_delete=models.CASCADE, db_column='auth_user_id')
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    response_text = models.TextField(null=True, blank=True)
+    selected_option = models.IntegerField()
     response_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:

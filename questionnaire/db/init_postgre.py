@@ -97,7 +97,7 @@ def execute_custom_tables_creation(connection_parameters):
         id serial PRIMARY KEY,
         auth_user_id INT NOT NULL,
         question_id INT NOT NULL,
-        response_text TEXT ,
+        selected_option INT NOT NULL,
         response_date TIMESTAMP NOT NULL,
         CONSTRAINT fk_auth_user FOREIGN KEY (auth_user_id) REFERENCES auth_user (id),
         CONSTRAINT fk_questions FOREIGN KEY (question_id) REFERENCES questions (id)

@@ -14,4 +14,14 @@ class LoginForm(forms.Form):
 
 
 class QuestionResponseForm(forms.Form):
-    selected_option = forms.ChoiceField(choices=[('1', 'Первый вариант'), ('2', 'Второй вариант'), ('3', 'Третий вариант'), ('4', 'Четвертый вариант')], widget=forms.RadioSelect, label='Выберите вариант ответа')
+    # selected_option = forms.ChoiceField(choices=[('1', 'Первый вариант'), ('2', 'Второй вариант'), ('3', 'Третий вариант'), ('4', 'Четвертый вариант')], widget=forms.RadioSelect, label='Выберите вариант ответа')
+    def __init__(self, *args, **kwargs):
+        options = kwargs.pop('options', None)
+        super(QuestionResponseForm, self).__init__(*args, **kwargs)
+
+        if options:
+            self.fields['selected_option'] = forms.ChoiceField(
+                choices=options,
+                widget=forms.RadioSelect,
+                label='Выберите вариант ответа'
+            )

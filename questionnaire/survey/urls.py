@@ -14,6 +14,10 @@ urlpatterns = [
     path('surveys/admin/', admin.site.urls),
     re_path(r'^.*admin/', admin.site.urls),
     path('surveys/', views.survey_list, name='surveys_page'),
-    path('surveys/<int:pk>/', views.survey_detail, name='survey_details'),
+    path('surveys/<int:pk>/', views.survey_detail, name='survey_detail'),
+    path('statistics/<int:pk>/', views.statistics_detail, name='statistics_page'),
     path('questions/<int:pk>/', views.survey_detail, name='question_details'),
+
+
+
 ]

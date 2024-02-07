@@ -25,7 +25,7 @@
             <td>{{survey.participants}}</td>
             <td>{{survey.created_on}}</td>
             <td>{{survey.redacted}}</td>
-            <td><a href="{% url 'survey_details' pk=survey.id %}">Детали</a></td>
+            <td><a href="{% url 'survey_detail' pk=survey.id %}">Детали</a></td>
 
           </tr>
         {% endfor %}
