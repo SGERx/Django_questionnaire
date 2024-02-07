@@ -13,5 +13,5 @@ class LoginForm(forms.Form):
     remember_me = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}), label='Remember me')
 
 
-class QuestionForm(forms.Form):
-    answer = forms.CharField(max_length=50)
+class QuestionResponseForm(forms.Form):
+    selected_option = forms.ChoiceField(choices=[('1', 'Первый вариант'), ('2', 'Второй вариант'), ('3', 'Третий вариант'), ('4', 'Четвертый вариант')], widget=forms.RadioSelect, label='Выберите вариант ответа')

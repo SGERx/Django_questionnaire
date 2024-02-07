@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from django.template import loader
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
-from .forms import LoginForm, RegistrationForm, QuestionForm
+from .forms import LoginForm, RegistrationForm, QuestionResponseForm
 import bcrypt
 from django.contrib.auth.models import AbstractUser, AbstractBaseUser, User
 from django.contrib.auth import authenticate, login, logout
@@ -55,7 +55,7 @@ def survey_list(request):
 # Детали опроса
 @login_required
 def survey_detail(request, pk):
-    form = QuestionForm()
+    form = QuestionResponseForm()
     conn = psycopg2.connect(**connection_params)
     cursor = conn.cursor()
     query = f'SELECT * FROM questions WHERE survey_id={pk}'
@@ -71,18 +71,14 @@ def survey_detail(request, pk):
             {'survey_id': question[1], 'question_id': question[0], 'title': question[2],
              'answered_quantity': question[3], 'answered_rating': question[4],
              'question_text': question[5], 'answer_option_1': question[6],
-        'answer_option_2': question [7], 'answer_option_3': question[8],
-        'answer_option_4': question[9],'created_on': question[10], 'redacted': question[11]}
+        'answer_option_2': question[7], 'answer_option_3': question[8],
+        'answer_option_4': question[9], 'created_on': question[10], 'redacted': question[11]}
             for question in question_data
         ],
+        'form': form,
     }
-    # return render(request, 'survey/survey_detail.html', context, {'form': form})
+
     return render(request, 'survey/survey_detail.html', context)
-    
-    
-    
-    # template = loader.get_template('survey/survey_detail.html')
-    # return HttpResponse(template.render({}, request))
 
 
 def register_view(request):
@@ -93,12 +89,7 @@ def register_view(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             email = form.cleaned_data['email']
-
-            # hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
             hashed_password = make_password(password)
-            # user = Participant(username=username, password=hashed_password.decode('utf-8'), email=email)
-            # user = Participant(username=username, password=hashed_password, email=email)
-            # user.save()
             first_name = 'default'
             last_name = 'default'
             create_auth_user_query = sql.SQL('''
@@ -115,25 +106,6 @@ def register_view(request):
         form = RegistrationForm()
 
     return render(request, 'register.html', {'form': form})
-
-
-# def login_view(request):
-#     if request.method == 'POST':
-#         form = LoginForm(request.POST)
-#         if form.is_valid():
-#             username = form.cleaned_data['username']
-#             password = form.cleaned_data['password']
-#             user = Participant.objects.filter(username=username).first()
-#             # if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-#             if user and check_password(password, user.password):
-#                 login(request, user)
-#                 return redirect('home')
-#             else:
-#                 return render(request, 'login.html', {'form': form, 'error_message': 'Invalid username or password'})
-#     else:
-#         form = LoginForm()
-
-#     return render(request, 'login.html', {'form': form})
 
 
 def login_view(request):

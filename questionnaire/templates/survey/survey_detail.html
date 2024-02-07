@@ -3,41 +3,54 @@
   Опросы
 {% endblock %} 
 {% block content %}
-<h4>Детали опроса</h4>
-<table class="table table-hover">
-    <thead>
-      <tr>
-        <th>id опроса</th>
-        <th>id вопроса</th>
-        <th>заголовок вопроса</th>
-        <th>текст вопроса</th>
-        <th>первый вариант ответа</th>
-        <th>второй вариант ответа</th>
-        <th>третий вариант ответа</th>
-        <th>четвертый вариант ответа</th>
-        <th>Ответивших</th>
-        <th>Процент ответивших</th>
-        <th>создан</th>
-        <th>изменен</th>
-      </tr>
-      </thead>
+
+<style>
+  .survey-form {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f8f8f8;
+}
+
+.question-info {
+    margin-bottom: 20px;
+}
+
+.question-info h5 {
+    margin: 5px 0;
+}
+
+.submit-button {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.submit-button:hover {
+    background-color: #45a049;
+}
+</style>
+<h4>Прохождение опроса</h4>
       <tbody>
         {% for question in question_data %}
-          <tr>
-            <td>{{question.survey_id}}</td>
-            <td>{{question.question_id}}</td>
-            <td>{{question.title}}</td>
-            <td>{{question.question_text}}</td>
-            <td>{{question.answer_option_1}}</td>
-            <td>{{question.answer_option_2}}</td>
-            <td>{{question.answer_option_3}}</td>
-            <td>{{question.answer_option_4}}</td>
-            <td>{{question.answered_quantity}}</td>
-            <td>{{question.answered_rating}}</td>
-            <td>{{question.created_on}}</td>
-            <td>{{question.redacted}}</td>
-          </tr>
-        {% endfor %}
+        <form class="survey-form" method="post" action="{% url 'surveys_page' %}">
+            {% csrf_token %}
+            <input type="hidden" name="survey_id" value="{{ question.survey_id }}">
+            <input type="hidden" name="question_id" value="{{ question.question_id }}">
+            <div class="question-info">
+                <h5> {{ question.title }}</h5>
+                <h5> {{ question.question_text }}</h5>
+            </div>
+    
+            {{ form.as_p }}
+            <input class="submit-button" type="submit" value="Ответить">
+        </form>
+    {% endfor %}
       </tbody>
-</table>
 {% endblock %} 
