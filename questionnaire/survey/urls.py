@@ -1,6 +1,7 @@
 from django.urls import path, include
 from . import views
 from django.contrib import admin
+from django.urls import re_path
 
 urlpatterns = [
     path('', views.index, name='main_page'),
@@ -11,6 +12,7 @@ urlpatterns = [
     path('home/', views.index, name='home'),
     path('index/', views.index, name='main_page'),
     path('surveys/admin/', admin.site.urls),
+    re_path(r'^.*admin/', admin.site.urls),
     path('surveys/', views.survey_list, name='surveys_page'),
     path('surveys/<int:pk>/', views.survey_detail, name='survey_details'),
     path('questions/<int:pk>/', views.survey_detail, name='question_details'),

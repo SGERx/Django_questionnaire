@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AnswerOption, Participant, Question, QuestionRelation, Survey, UserAnswer
+from .models import AnswerOption, Question, QuestionRelation, Survey, UserAnswer
 from django import forms
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
@@ -15,7 +15,7 @@ class SurveyAdmin(admin.ModelAdmin):
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'survey', 'title', 'participants_rating', 'answered_quantity', 'answered_rating', 'question_text', 'created_on', 'redacted')
+    list_display = ('id', 'survey', 'title', 'user_rating', 'answered_quantity', 'answered_rating', 'question_text', 'created_on', 'redacted')
     search_fields = ('question_text',)
     fields = ('survey', 'title', 'question_text')
 
@@ -36,7 +36,7 @@ class AnswerOptionAdmin(admin.ModelAdmin):
 
 @admin.register(UserAnswer)
 class UserAnswerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'participants_id', 'question', 'response_text', 'response_date')
+    list_display = ('id', 'auth_user_id', 'question', 'response_text', 'response_date')
     search_fields = ('response_text',)
 
 
@@ -55,13 +55,6 @@ class MyUserCreationForm(UserCreationForm):
         if password1 and password2 and password1 != password2:
             raise forms.ValidationError('Passwords do not match')
         return password2
-
-
-@admin.register(Participant)
-class ParticipantAdmin(admin.ModelAdmin):
-    list_display = ('id', 'username', 'email', 'created_on', 'last_login')
-    search_fields = ('username', 'email')
-    exclude = ('password_salt', 'created_on', 'last_login')
 
 
 class MyUserAdmin(BaseUserAdmin):

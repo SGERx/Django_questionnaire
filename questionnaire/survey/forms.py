@@ -8,6 +8,10 @@ class RegistrationForm(forms.Form):
 
 
 class LoginForm(forms.Form):
-    email = forms.CharField(max_length=50)
+    email = forms.EmailField(required=True, label='Email')
     password = forms.CharField(widget=forms.PasswordInput())
     remember_me = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}), label='Remember me')
+
+
+class QuestionForm(forms.Form):
+    answer = forms.CharField(max_length=50)

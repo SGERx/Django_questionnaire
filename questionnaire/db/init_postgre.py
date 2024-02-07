@@ -36,22 +36,7 @@ def execute_custom_tables_creation(connection_parameters):
     print("STARTING CUSTOM TABLES CREATION")
     connection = psycopg2.connect(**connection_parameters)
     cursor = connection.cursor()
-    print("participants")
-    try:
-        create_users_query = '''CREATE TABLE IF NOT EXISTS participants(
-        id serial PRIMARY KEY,
-        username VARCHAR (30) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        password_salt VARCHAR(255) NOT NULL,
-        email VARCHAR (30) UNIQUE NOT NULL,
-        created_on TIMESTAMP NOT NULL,
-        last_login TIMESTAMP
-        ); '''
-        cursor.execute(create_users_query)
-        print("participants - created")
-    except Exception as e:
-        connection.rollback()
-        print(f"Error: {e}")
+
     print("surveys")
     try:
         create_surveys_query = '''CREATE TABLE IF NOT EXISTS surveys(
@@ -73,7 +58,6 @@ def execute_custom_tables_creation(connection_parameters):
         id serial PRIMARY KEY,
         survey_id INT NOT NULL,
         title VARCHAR (50) NOT NULL,
-        participants_rating INT DEFAULT 0 NOT NULL,
         answered_quantity INT DEFAULT 0 NOT NULL,
         answered_rating DECIMAL(5, 2) DEFAULT 0 NOT NULL,
         question_text TEXT,
@@ -122,11 +106,11 @@ def execute_custom_tables_creation(connection_parameters):
     try:
         create_user_answers_query = '''CREATE TABLE IF NOT EXISTS user_answers(
         id serial PRIMARY KEY,
-        participants_id INT NOT NULL,
+        auth_user_id INT NOT NULL,
         question_id INT NOT NULL,
         response_text TEXT ,
         response_date TIMESTAMP NOT NULL,
-        CONSTRAINT fk_participants FOREIGN KEY (participants_id) REFERENCES participants (id),
+        CONSTRAINT fk_auth_user FOREIGN KEY (auth_user_id) REFERENCES auth_user (id),
         CONSTRAINT fk_questions FOREIGN KEY (question_id) REFERENCES questions (id)
         );'''
         cursor.execute(create_user_answers_query)
@@ -147,11 +131,11 @@ def execute_index_creation(connection_parameters):
 
     try:
 
-        create_users_index_username = '''CREATE INDEX IF NOT EXISTS idx_participants_username ON participants(username);'''
+        create_users_index_username = '''CREATE INDEX IF NOT EXISTS idx_auth_user_username ON auth_user(username);'''
         cursor.execute(create_users_index_username)
-        create_users_index_email = '''CREATE INDEX IF NOT EXISTS idx_participants_email ON participants(email);'''
+        create_users_index_email = '''CREATE INDEX IF NOT EXISTS idx_auth_user_email ON auth_user(email);'''
         cursor.execute(create_users_index_email)
-        create_users_index_last_login = '''CREATE INDEX IF NOT EXISTS idx_participants_last_login ON participants(last_login);'''
+        create_users_index_last_login = '''CREATE INDEX IF NOT EXISTS idx_auth_user_last_login ON auth_user(last_login);'''
         cursor.execute(create_users_index_last_login)
 
         create_surveys_index_title = '''CREATE INDEX IF NOT EXISTS idx_surveys_title ON surveys(title);'''
@@ -160,9 +144,9 @@ def execute_index_creation(connection_parameters):
         create_question_index_question_surveys_id = '''CREATE INDEX IF NOT EXISTS idx_questions_survey_id ON questions(survey_id);'''
         cursor.execute(create_question_index_question_surveys_id)
 
-        create_user_answers_index_users_id = '''CREATE INDEX IF NOT EXISTS idx_user_answers_participants_id ON answers(participants_id);'''
+        create_user_answers_index_users_id = '''CREATE INDEX IF NOT EXISTS idx_user_answers_auth_user_id ON user_answers(auth_user_id);'''
         cursor.execute(create_user_answers_index_users_id)
-        create_user_answers_index_question_id = '''CREATE INDEX IF NOT EXISTS idx_user_answers_question_id ON answers(question_id);'''
+        create_user_answers_index_question_id = '''CREATE INDEX IF NOT EXISTS idx_user_answers_question_id ON user_answers(question_id);'''
         cursor.execute(create_user_answers_index_question_id)
         create_user_answers_options_index_question_id = '''CREATE INDEX IF NOT EXISTS idx_answer_options_question_id ON answer_options(question_id);'''
         cursor.execute(create_user_answers_options_index_question_id)
@@ -370,6 +354,6 @@ creation_params = {
 
 
 execute_db_creation(creation_params, database_name)
+execute_built_in_django_tables_creation(connection_parameters)
 execute_custom_tables_creation(connection_parameters)
 execute_index_creation(connection_parameters)
-execute_built_in_django_tables_creation(connection_parameters)

@@ -1,7 +1,35 @@
 {% extends 'survey/base.html' %}
 {% block title %}
-  Детали опроса
+  Опросы
 {% endblock %} 
 {% block content %}
-  Опрос
+<h4>Детали опроса</h4>
+<table class="table table-hover">
+    <thead>
+      <tr>
+        <th>id опроса</th>
+        <th>id вопроса</th>
+        <th>заголовок вопроса</th>
+        <th>Ответивших</th>
+        <th>Процент ответивших</th>
+        <th>текст вопроса</th>
+        <th>создан</th>
+        <th>изменен</th>
+      </tr>
+      </thead>
+      <tbody>
+        {% for question in question_data %}
+          <tr>
+            <td>{{question.survey_id}}</td>
+            <td>{{question.question_id}}</td>
+            <td>{{question.title}}</td>
+            <td>{{question.answered_quantity}}</td>
+            <td>{{question.answered_rating}}</td>
+            <td>{{question.question_text}}</td>
+            <td>{{question.created_on}}</td>
+            <td>{{question.redacted}}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+</table>
 {% endblock %} 
