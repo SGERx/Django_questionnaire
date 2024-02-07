@@ -61,6 +61,10 @@ def execute_custom_tables_creation(connection_parameters):
         answered_quantity INT DEFAULT 0 NOT NULL,
         answered_rating DECIMAL(5, 2) DEFAULT 0 NOT NULL,
         question_text TEXT,
+        answer_option_1 TEXT,
+        answer_option_2 TEXT,
+        answer_option_3 TEXT,
+        answer_option_4 TEXT,
         created_on TIMESTAMP NOT NULL,
         redacted TIMESTAMP,
         CONSTRAINT fk_surveys FOREIGN KEY(survey_id) REFERENCES surveys(id)
@@ -87,21 +91,6 @@ def execute_custom_tables_creation(connection_parameters):
         connection.rollback()
         print(f"Error: {e}")
 
-    print("answer_options")
-    try:
-        create_answer_options_query = '''CREATE TABLE IF NOT EXISTS answer_options(
-        id serial PRIMARY KEY,
-        question_id INT NOT NULL,
-        option_text TEXT NOT NULL,
-        created_on TIMESTAMP NOT NULL,
-        redacted TIMESTAMP,
-        CONSTRAINT fk_question FOREIGN KEY (question_id) REFERENCES questions (id)
-        );'''
-        cursor.execute(create_answer_options_query)
-        print("answer_options - created")
-    except Exception as e:
-        connection.rollback()
-        print(f"Error: {e}")
     print("user_answers")
     try:
         create_user_answers_query = '''CREATE TABLE IF NOT EXISTS user_answers(
@@ -148,8 +137,6 @@ def execute_index_creation(connection_parameters):
         cursor.execute(create_user_answers_index_users_id)
         create_user_answers_index_question_id = '''CREATE INDEX IF NOT EXISTS idx_user_answers_question_id ON user_answers(question_id);'''
         cursor.execute(create_user_answers_index_question_id)
-        create_user_answers_options_index_question_id = '''CREATE INDEX IF NOT EXISTS idx_answer_options_question_id ON answer_options(question_id);'''
-        cursor.execute(create_user_answers_options_index_question_id)
 
         connection.commit()
 

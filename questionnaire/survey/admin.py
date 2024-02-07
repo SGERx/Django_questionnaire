@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AnswerOption, Question, QuestionRelation, Survey, UserAnswer
+from .models import Question, QuestionRelation, Survey, UserAnswer
 from django import forms
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
@@ -15,9 +15,14 @@ class SurveyAdmin(admin.ModelAdmin):
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'survey', 'title', 'user_rating', 'answered_quantity', 'answered_rating', 'question_text', 'created_on', 'redacted')
+    list_display = (
+        'id', 'survey_id', 'title', 'answered_quantity',
+        'answered_rating', 'question_text', 'answer_option_1',
+        'answer_option_2', 'answer_option_3', 'answer_option_4',
+        'created_on', 'redacted')
     search_fields = ('question_text',)
-    fields = ('survey', 'title', 'question_text')
+    fields = ('survey', 'title', 'question_text', 'answer_option_1',
+              'answer_option_2', 'answer_option_3', 'answer_option_4')
 
 
 @admin.register(QuestionRelation)
@@ -27,16 +32,9 @@ class QuestionRelationAdmin(admin.ModelAdmin):
     fields = ('parent_question', 'child_question', 'response_condition')
 
 
-@admin.register(AnswerOption)
-class AnswerOptionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'question', 'option_text', 'created_on', 'redacted')
-    search_fields = ('option_text',)
-    fields = ('question', 'option_text',)
-
-
 @admin.register(UserAnswer)
 class UserAnswerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'auth_user_id', 'question', 'response_text', 'response_date')
+    list_display = ('id', 'auth_user_id', 'question_id', 'response_text', 'response_date')
     search_fields = ('response_text',)
 
 

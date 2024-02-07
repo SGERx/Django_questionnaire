@@ -22,10 +22,13 @@ class Survey(models.Model):
 class Question(models.Model):
     survey = models.ForeignKey(Survey, on_delete=models.CASCADE)
     title = models.CharField(max_length=50)
-    user_rating = models.IntegerField(default=0)
     answered_quantity = models.IntegerField(default=0)
     answered_rating = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     question_text = models.TextField()
+    answer_option_1 = models.TextField()
+    answer_option_2 = models.TextField()
+    answer_option_3 = models.TextField()
+    answer_option_4 = models.TextField()
     created_on = models.DateTimeField(auto_now_add=True)
     redacted = models.DateTimeField(null=True, blank=True)
 
@@ -45,17 +48,6 @@ class QuestionRelation(models.Model):
     class Meta:
         managed = False
         db_table = 'question_relations'
-
-
-class AnswerOption(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    option_text = models.TextField()
-    created_on = models.DateTimeField(auto_now_add=True)
-    redacted = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        managed = False
-        db_table = 'answer_options'
 
 
 class UserAnswer(models.Model):
