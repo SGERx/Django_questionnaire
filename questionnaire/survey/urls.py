@@ -4,7 +4,7 @@ from django.contrib import admin
 
 urlpatterns = [
     path('', views.index, name='main_page'),
-    # path('login/', views.login_page, name='login'),
+    path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('accounts/register/', views.register_view, name='register'),
