@@ -140,15 +140,19 @@ def survey_detail(request, pk, question_number=None):
             print("POST - ОТКРЫВАЮЩЕГО ВОПРОСА НЕТ")
             opening_question = get_opening_question(cursor, pk, user_id)
             next_question_length = len(opening_question)
-            # options = [
-            #         (str(i + 1), opening_question[6 + i]) for i in range(11-next_question_length)
-            #     ]
-            options = [
-                (str(i + 1), answer) for i, answer in enumerate(opening_question[8:12]) if answer is not None
-            ]
-            form = QuestionResponseForm(request.POST, options=options)
+
+            options = []
+
+            for i in range(11, 8, -1):
+                if len(opening_question[i]) != 0:
+                    options = [
+                        (str(j + 1), answer) for j, answer in enumerate(opening_question[8:i+1])
+                    ]
+                    break
+            form = QuestionResponseForm(request.POST if request.method == 'POST' else None, options=options)
             if form.is_valid():
                 print("ФОРМА ВАЛИДНА")
+                print(f'form.cleaned_data - {form.cleaned_data}')
                 selected_option = form.cleaned_data['selected_option']
                 cursor.execute('''
                     INSERT INTO user_answers (auth_user_id, question_id, selected_option, response_date)
@@ -167,17 +171,19 @@ def survey_detail(request, pk, question_number=None):
                     # options = [
                     #     (str(i + 1), answer) for i, answer in enumerate(next_question[8:12]) if answer is not None
                     # ]
+
                     options = []
 
                     for i in range(11, 8, -1):
                         if len(next_question[i]) != 0:
-                            print(f'opening_question[{i}] - {next_question[i]}')
                             options = [
                                 (str(j + 1), answer) for j, answer in enumerate(next_question[8:i+1])
                             ]
                             break
-                    form = QuestionResponseForm(request.POST, options=options)
+                    form = QuestionResponseForm(request.POST if request.method == 'POST' else None, options=options)
+
                     next_question_length = len(next_question)
+
                     print(f'Длина следующего вопроса - {next_question_length}')
                     context = {
                         'question_data': {
