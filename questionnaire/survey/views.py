@@ -44,9 +44,7 @@ def survey_list(request):
     surveys_data = cursor.fetchall()
     cursor.close()
     conn.close()
-    print(surveys_data)
-    for survey in surveys_data:
-        print(survey)
+
     context = {
         'surveys_data': [
             {'id': survey[0], 'title': survey[1], 'description': survey[2],
@@ -64,10 +62,12 @@ def survey_detail(request, pk, question_number=None):
     cursor = connection.cursor()
     user_id = request.user.id
     if request.method == 'GET':
+        print("МЕТОД ЗАПРОСА GET")
         if question_number is None:
-            print("GET - ОТКРЫВАЮЩЕГО ВОПРОСА НЕТ")
+            print("GET - НОМЕРА ОТКРЫВАЮЩЕГО ВОПРОСА НЕТ")
             opening_question = get_opening_question(cursor, pk, user_id)
             if opening_question:
+                print('ПОДОБРАН ОТКРЫВАЮЩИЙ ВОПРОС')
                 options = [
                     (str(i + 1), opening_question[6 + i]) for i in range(4) if opening_question[6 + i]
                 ]
@@ -92,19 +92,23 @@ def survey_detail(request, pk, question_number=None):
 
                 return render(request, 'survey/survey_detail.html', context)
             else:
+                print('ДОСТУПНЫХ ВОПРОСОВ НЕТ')
                 was_there_any_question = check_empty_survey(cursor, pk)
                 if was_there_any_question > 0:
+                    print('В ОПРОСЕ ВОПРОСЫ БЫЛИ')
                     return redirect('statistics_page', pk=pk)
                 elif was_there_any_question == 0:
+                    print('В ОПРОСЕ ВОПРОСОВ НЕ БЫЛО')
                     return redirect('empty_survey')
                 else:
                     error_message = "ошибка проверки опроса"
                     return HttpResponseServerError(error_message)
         else:
-            error_message = "ошибка получения номера вопроса"
+            error_message = "в методе GET не предусмотрена передача номера вопроса"
             return HttpResponseServerError(error_message)
 
     if request.method == 'POST':
+        print('МЕТОД ЗАПРОСА POST')
         if question_number is None:
             print("POST - ОТКРЫВАЮЩЕГО ВОПРОСА НЕТ")
             opening_question = get_opening_question(cursor, pk, user_id)
@@ -113,6 +117,7 @@ def survey_detail(request, pk, question_number=None):
                 ]
             form = QuestionResponseForm(request.POST, options=options)
             if form.is_valid():
+                print("ФОРМА ВАЛИДНА")
                 selected_option = form.cleaned_data['selected_option']
                 cursor.execute('''
                     INSERT INTO user_answers (auth_user_id, question_id, selected_option, response_date)
@@ -122,9 +127,15 @@ def survey_detail(request, pk, question_number=None):
                 connection.commit()
                 current_question_number = opening_question[0]
                 next_question_exists = check_next_question_existance(cursor, pk, user_id, current_question_number)
-                print(f'next_question - {next_question_exists}')
+                print(f'СЛЕДУЮЩИЙ ВОПРОС ПРОВЕРЕН - {next_question_exists}')
                 if next_question_exists:
+                    print('СЛЕДУЮЩИЙ ВОПРОС ЕСТЬ')
                     next_question = get_next_question_data(cursor, pk, user_id, current_question_number, answer_option=selected_option)
+                    print(f"СЛЕДУЮЩИЙ ВОПРОС ИЗ ОПРОСА {pk}, ВОПРОС НОМЕР {next_question[0]}, ДАННЫЕ: {next_question}")
+                    options = [
+                        (str(i + 1), next_question[6 + i]) for i in range(4) if next_question[6 + i]
+                    ]
+                    form = QuestionResponseForm(request.POST, options=options)
                     context = {
                         'question_data': {
                             'survey_id': next_question[1],
@@ -146,10 +157,13 @@ def survey_detail(request, pk, question_number=None):
                     }
                     return render(request, 'survey/survey_detail.html', context)
                 else:
+                    print('СЛЕДУЮЩЕГО ВОПРОСА НЕТ')
                     was_there_any_question = check_empty_survey(cursor, pk)
                     if was_there_any_question > 0:
+                        print('В ОПРОСЕ ВОПРОСЫ БЫЛИ')
                         return redirect('statistics_page', pk=pk)
                     elif was_there_any_question == 0:
+                        print('В ОПРОСЕ ВОПРОСОВ НЕ БЫЛО')
                         return redirect('empty_survey')
                     else:
                         error_message = "ошибка проверки опроса"
@@ -158,7 +172,7 @@ def survey_detail(request, pk, question_number=None):
                 error_message = "POST - ФОРМА НЕВАЛИДНА"
                 return render(request, 'survey/survey_detail.html', context)
         else:
-            error_message = "POST - ОТКРЫВАЮЩИЙ ВОПРОС ЕСТЬ"
+            error_message = "в методе POST не предусмотрена передача номера вопроса"
             return HttpResponseServerError(error_message)
 
 
