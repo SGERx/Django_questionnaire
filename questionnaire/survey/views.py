@@ -68,10 +68,37 @@ def survey_detail(request, pk, question_number=None):
             opening_question = get_opening_question(cursor, pk, user_id)
             if opening_question:
                 print('ПОДОБРАН ОТКРЫВАЮЩИЙ ВОПРОС')
-                options = [
-                    (str(i + 1), opening_question[6 + i]) for i in range(4) if opening_question[6 + i]
-                ]
+                opening_question_length = len(opening_question)
+                # if len(opening_question[11]) != 0:
+                #     print(f'opening_question[11] - {opening_question[11]}')
+                #     opening_question_11_type=type(opening_question[11])
+                #     print(f'opening_question_11_type - {opening_question_11_type}')
+                #     options = [
+                #         (str(i + 1), answer) for i, answer in enumerate(opening_question[8:12])
+                #     ]
+                # elif len(opening_question[10]) != 0:
+                #     print(f'opening_question[10] - {opening_question[10]}')
+                #     options = [
+                #         (str(i + 1), answer) for i, answer in enumerate(opening_question[8:11])
+                #     ]
+                # elif len(opening_question[9]) != 0:
+                #     print(f'opening_question[9] - {opening_question[9]}')
+                #     options = [
+                #         (str(i + 1), answer) for i, answer in enumerate(opening_question[8:10])
+                #     ]
+                #     for i in range(11, 8, -1):
+                options = []
+
+                for i in range(11, 8, -1):
+                    if len(opening_question[i]) != 0:
+                        print(f'opening_question[{i}] - {opening_question[i]}')
+                        options = [
+                            (str(j + 1), answer) for j, answer in enumerate(opening_question[8:i+1])
+                        ]
+                        break
                 form = QuestionResponseForm(request.POST if request.method == 'POST' else None, options=options)
+
+                print(f'ДЛИНА ОТКРЫВАЮЩЕГО ВОПРОСА - {opening_question_length}')
                 context = {
                     'question_data': {
                         'survey_id': opening_question[1],
@@ -80,12 +107,12 @@ def survey_detail(request, pk, question_number=None):
                         'answered_quantity': opening_question[3],
                         'answered_rating': opening_question[4],
                         'question_text': opening_question[5],
-                        'answer_option_1': opening_question[6],
-                        'answer_option_2': opening_question[7],
-                        'answer_option_3': opening_question[8],
-                        'answer_option_4': opening_question[9],
-                        'created_on': opening_question[10],
-                        'redacted': opening_question[11],
+                        'created_on': opening_question[6],
+                        'redacted': opening_question[7],
+                        'answer_option_1': opening_question[8],
+                        'answer_option_2': opening_question[9] if opening_question_length >= 10 else None,
+                        'answer_option_3': opening_question[10] if opening_question_length >= 11 else None,
+                        'answer_option_4': opening_question[11] if opening_question_length >= 12 else None,
                     },
                     'form': form,
                 }
@@ -112,11 +139,12 @@ def survey_detail(request, pk, question_number=None):
         if question_number is None:
             print("POST - ОТКРЫВАЮЩЕГО ВОПРОСА НЕТ")
             opening_question = get_opening_question(cursor, pk, user_id)
+            next_question_length = len(opening_question)
             # options = [
-            #         (str(i + 1), opening_question[6 + i]) for i in range(4) if opening_question[6 + i]
+            #         (str(i + 1), opening_question[6 + i]) for i in range(11-next_question_length)
             #     ]
             options = [
-                (str(i + 1), answer) for i, answer in enumerate(opening_question[6:10]) if answer is not None
+                (str(i + 1), answer) for i, answer in enumerate(opening_question[8:12]) if answer is not None
             ]
             form = QuestionResponseForm(request.POST, options=options)
             if form.is_valid():
@@ -137,12 +165,20 @@ def survey_detail(request, pk, question_number=None):
                     print(f"СЛЕДУЮЩИЙ ВОПРОС ИЗ ОПРОСА {pk}, ВОПРОС НОМЕР {next_question[0]}, ДАННЫЕ: {next_question}")
                     
                     # options = [
-                    #     (str(i + 1), next_question[6 + i]) for i in range(4) if next_question[6 + i]
+                    #     (str(i + 1), answer) for i, answer in enumerate(next_question[8:12]) if answer is not None
                     # ]
-                    options = [
-                        (str(i + 1), answer) for i, answer in enumerate(next_question[6:10]) if answer is not None
-                    ]
+                    options = []
+
+                    for i in range(11, 8, -1):
+                        if len(next_question[i]) != 0:
+                            print(f'opening_question[{i}] - {next_question[i]}')
+                            options = [
+                                (str(j + 1), answer) for j, answer in enumerate(next_question[8:i+1])
+                            ]
+                            break
                     form = QuestionResponseForm(request.POST, options=options)
+                    next_question_length = len(next_question)
+                    print(f'Длина следующего вопроса - {next_question_length}')
                     context = {
                         'question_data': {
                             'survey_id': next_question[1],
@@ -151,12 +187,12 @@ def survey_detail(request, pk, question_number=None):
                             'answered_quantity': next_question[3],
                             'answered_rating': next_question[4],
                             'question_text': next_question[5],
-                            'answer_option_1': next_question[6],
-                            'answer_option_2': next_question[7],
-                            'answer_option_3': next_question[8],
-                            'answer_option_4': next_question[9],
-                            'created_on': next_question[10],
-                            'redacted': next_question[11],
+                            'created_on': next_question[6],
+                            'redacted': next_question[7],
+                            'answer_option_1': next_question[8],
+                            'answer_option_2': next_question[9] if next_question_length >= 10 else None,
+                            'answer_option_3': next_question[10] if next_question_length >= 11 else None,
+                            'answer_option_4': next_question[11] if next_question_length >= 12 else None,
                         },
                         'form': form,
                         'survey_id': pk,
@@ -221,24 +257,40 @@ def check_next_question_existance(cursor, pk, user_id, current_question_number=N
 
 
 def get_next_question_data(cursor, pk, user_id, current_question_number, answer_option):
+    print('!!!ПРОВЕРКА СЛЕДУЮЩЕГО ВОПРОСА')
     check_child_question_existence = f'''SELECT * FROM question_relations WHERE parent_question_id='{current_question_number}' AND response_condition = '{answer_option}' '''
     cursor.execute(check_child_question_existence)
     check_child_question_existence_result = cursor.fetchone()
     if check_child_question_existence_result is None:
-        simple_next_question = f'''SELECT * FROM questions WHERE survey_id='{pk}' AND id NOT IN (SELECT question_id FROM user_answers WHERE auth_user_id='{user_id}') AND id NOT IN (SELECT child_question_id FROM question_relations)'''
-        cursor.execute(simple_next_question)
+        print('!!!ДОЧЕРНЕГО ВОПРОСА НЕТ')
+        simple_next_question_query = f'''SELECT * FROM questions WHERE survey_id='{pk}' AND id NOT IN (SELECT question_id FROM user_answers WHERE auth_user_id='{user_id}') '''
+        cursor.execute(simple_next_question_query)
         simple_next_question_result = cursor.fetchone()
+        print(f'!!!ВОЗВРАЩАЕМОЕ ЗНАЧЕНИЕ - {simple_next_question_result}')
+        simple_next_question_result_type = type(simple_next_question_result)
+        print(f'!!!ТИП ВОЗВРАЩАЕМОГО ЗНАЧЕНИЯ = {simple_next_question_result_type}')
         return simple_next_question_result
     else:
+        print('!!!ДОЧЕРНИЙ ВОПРОС ЕСТЬ')
         check_child_question_was_not_answered = f'''SELECT * FROM user_answers WHERE question_id IN (SELECT child_question_id FROM question_relations WHERE parent_question_id='{current_question_number}' AND response_condition = '{answer_option}') '''
         cursor.execute(check_child_question_was_not_answered)
         check_child_question_was_not_answered_result = cursor.fetchone()
+        
         if check_child_question_was_not_answered_result is None:
-            child_question = f'''SELECT child_question_id FROM question_relations WHERE parent_question_id='{current_question_number}' '''
+            print('!!!ДОЧЕРНИЙ ВОПРОС БЕЗ ОТВЕТА, ПЕРЕХОДИМ К НЕМУ')
+            child_question = f'''SELECT child_question_id FROM question_relations WHERE parent_question_id='{current_question_number}' AND response_condition='{answer_option}' '''
             cursor.execute(child_question)
+            child_question_result = cursor.fetchone()
+            print(f'!!!ВОЗВРАЩАЕМОЕ ЗНАЧЕНИЕ - {child_question_result}')
+            child_question_result_type = type(child_question_result)
+            print(f'!!!ТИП ВОЗВРАЩАЕМОГО ЗНАЧЕНИЯ = {child_question_result_type}')
+            child_question_id = child_question_result[0]
+            next_child_question_query = f'''SELECT * FROM questions WHERE id='{child_question_id}' '''
+            cursor.execute(next_child_question_query)
             child_question_result = cursor.fetchone()
             return child_question_result
         else:
+            print('!!!ДОЧЕРНИЙ ВОПРОС БЫЛ ОТВЕЧЕН, БЕРЕМ СЛЕДУЮЩИЙ ОБЫЧНЫЙ')
             simple_next_question = f'''SELECT id FROM questions WHERE survey_id='{pk}' AND id NOT IN (SELECT question_id FROM user_answers WHERE auth_user_id='{user_id}') AND id NOT IN (SELECT child_question_id FROM question_relations)'''
             cursor.execute(simple_next_question)
             simple_next_question_result = cursor.fetchone()

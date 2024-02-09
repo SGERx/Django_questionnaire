@@ -61,12 +61,13 @@ def execute_custom_tables_creation(connection_parameters):
         answered_quantity INT DEFAULT 0 NOT NULL,
         answered_rating DECIMAL(5, 2) DEFAULT 0 NOT NULL,
         question_text TEXT,
+        created_on TIMESTAMP NOT NULL,
+        redacted TIMESTAMP,
         answer_option_1 TEXT,
         answer_option_2 TEXT,
         answer_option_3 TEXT,
         answer_option_4 TEXT,
-        created_on TIMESTAMP NOT NULL,
-        redacted TIMESTAMP,
+
         CONSTRAINT fk_surveys FOREIGN KEY(survey_id) REFERENCES surveys(id)
         );'''
         cursor.execute(create_questions_query)
