@@ -112,9 +112,12 @@ def survey_detail(request, pk, question_number=None):
         if question_number is None:
             print("POST - ОТКРЫВАЮЩЕГО ВОПРОСА НЕТ")
             opening_question = get_opening_question(cursor, pk, user_id)
+            # options = [
+            #         (str(i + 1), opening_question[6 + i]) for i in range(4) if opening_question[6 + i]
+            #     ]
             options = [
-                    (str(i + 1), opening_question[6 + i]) for i in range(4) if opening_question[6 + i]
-                ]
+                (str(i + 1), answer) for i, answer in enumerate(opening_question[6:10]) if answer is not None
+            ]
             form = QuestionResponseForm(request.POST, options=options)
             if form.is_valid():
                 print("ФОРМА ВАЛИДНА")
@@ -132,8 +135,12 @@ def survey_detail(request, pk, question_number=None):
                     print('СЛЕДУЮЩИЙ ВОПРОС ЕСТЬ')
                     next_question = get_next_question_data(cursor, pk, user_id, current_question_number, answer_option=selected_option)
                     print(f"СЛЕДУЮЩИЙ ВОПРОС ИЗ ОПРОСА {pk}, ВОПРОС НОМЕР {next_question[0]}, ДАННЫЕ: {next_question}")
+                    
+                    # options = [
+                    #     (str(i + 1), next_question[6 + i]) for i in range(4) if next_question[6 + i]
+                    # ]
                     options = [
-                        (str(i + 1), next_question[6 + i]) for i in range(4) if next_question[6 + i]
+                        (str(i + 1), answer) for i, answer in enumerate(next_question[6:10]) if answer is not None
                     ]
                     form = QuestionResponseForm(request.POST, options=options)
                     context = {
