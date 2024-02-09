@@ -10,7 +10,7 @@ from django.contrib.auth.forms import UserCreationForm
 class SurveyAdmin(admin.ModelAdmin):
     list_display = ('id', 'title', 'description', 'participants', 'created_on', 'redacted')
     search_fields = ('title',)
-    fields = ('title', 'description', 'participants')
+    fields = ('title', 'description')
 
 
 @admin.register(Question)

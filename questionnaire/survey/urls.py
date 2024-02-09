@@ -17,6 +17,7 @@ urlpatterns = [
     path('surveys/<int:pk>/', views.survey_detail, name='survey_detail'),
     path('statistics/<int:pk>/', views.statistics_detail, name='statistics_page'),
     path('questions/<int:pk>/', views.survey_detail, name='question_details'),
+    path('empty_survey/', views.empty_survey, name='empty_survey'),
 
 
 

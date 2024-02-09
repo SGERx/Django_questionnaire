@@ -12,7 +12,11 @@ from psycopg2 import sql
 import psycopg2
 from django.db import connection
 from datetime import datetime
-
+from django.shortcuts import render, redirect
+from django.db import connection
+from django.utils import timezone
+from .forms import QuestionResponseForm
+from django.http import HttpResponseServerError
 
 connection_params = {
     'dbname': 'questionnaire_postgres',
@@ -55,68 +59,174 @@ def survey_list(request):
 
 # Детали опроса
 @login_required
-def survey_detail(request, pk):
+def survey_detail(request, pk, question_number=None):
+    connection = psycopg2.connect(**connection_params)
+    cursor = connection.cursor()
+    user_id = request.user.id
+    if request.method == 'GET':
+        if question_number is None:
+            print("GET - ОТКРЫВАЮЩЕГО ВОПРОСА НЕТ")
+            opening_question = get_opening_question(cursor, pk, user_id)
+            if opening_question:
+                options = [
+                    (str(i + 1), opening_question[6 + i]) for i in range(4) if opening_question[6 + i]
+                ]
+                form = QuestionResponseForm(request.POST if request.method == 'POST' else None, options=options)
+                context = {
+                    'question_data': {
+                        'survey_id': opening_question[1],
+                        'question_id': opening_question[0],
+                        'title': opening_question[2],
+                        'answered_quantity': opening_question[3],
+                        'answered_rating': opening_question[4],
+                        'question_text': opening_question[5],
+                        'answer_option_1': opening_question[6],
+                        'answer_option_2': opening_question[7],
+                        'answer_option_3': opening_question[8],
+                        'answer_option_4': opening_question[9],
+                        'created_on': opening_question[10],
+                        'redacted': opening_question[11],
+                    },
+                    'form': form,
+                }
 
-    conn = psycopg2.connect(**connection_params)
-    cursor = conn.cursor()
-    query = 'SELECT * FROM questions WHERE id IN (SELECT MIN(id) from questions WHERE id NOT IN (SELECT id FROM user_answers))'
-    cursor.execute(query)
-    question_data = cursor.fetchone()
-    cursor.close()
-    conn.close()
-
-    options = [
-        (str(i + 1), question_data[6 + i]) for i in range(4)
-    ]
-
-    form = QuestionResponseForm(request.POST if request.method == 'POST' else None, options=options)
-    context = {
-        'question_data': {
-            'survey_id': question_data[1],
-            'question_id': question_data[0],
-            'title': question_data[2],
-            'answered_quantity': question_data[3],
-            'answered_rating': question_data[4],
-            'question_text': question_data[5],
-            'answer_option_1': question_data[6],
-            'answer_option_2': question_data[7],
-            'answer_option_3': question_data[8],
-            'answer_option_4': question_data[9],
-            'created_on': question_data[10],
-            'redacted': question_data[11],
-        },
-        'form': form,
-    }
+                return render(request, 'survey/survey_detail.html', context)
+            else:
+                was_there_any_question = check_empty_survey(cursor, pk)
+                if was_there_any_question > 0:
+                    return redirect('statistics_page', pk=pk)
+                elif was_there_any_question == 0:
+                    return redirect('empty_survey')
+                else:
+                    error_message = "ошибка проверки опроса"
+                    return HttpResponseServerError(error_message)
+        else:
+            error_message = "ошибка получения номера вопроса"
+            return HttpResponseServerError(error_message)
 
     if request.method == 'POST':
-        if form.is_valid():
-            selected_option = form.cleaned_data['selected_option']
+        if question_number is None:
+            print("POST - ОТКРЫВАЮЩЕГО ВОПРОСА НЕТ")
+            opening_question = get_opening_question(cursor, pk, user_id)
+            options = [
+                    (str(i + 1), opening_question[6 + i]) for i in range(4) if opening_question[6 + i]
+                ]
+            form = QuestionResponseForm(request.POST, options=options)
+            if form.is_valid():
+                selected_option = form.cleaned_data['selected_option']
+                cursor.execute('''
+                    INSERT INTO user_answers (auth_user_id, question_id, selected_option, response_date)
+                    VALUES (%s, %s, %s, %s)
+                ''', [request.user.id, opening_question[0], selected_option, datetime.now()])
 
-            with psycopg2.connect(**connection_params) as conn:
-                with conn.cursor() as cursor:
-                    cursor.execute('''
-                        INSERT INTO user_answers (auth_user_id, question_id, selected_option, response_date)
-                        VALUES (%s, %s, %s, %s)
-                    ''', [request.user.id, question_data[0], selected_option, datetime.now()])
+                connection.commit()
+                current_question_number = opening_question[0]
+                next_question_exists = check_next_question_existance(cursor, pk, user_id, current_question_number)
+                print(f'next_question - {next_question_exists}')
+                if next_question_exists:
+                    next_question = get_next_question_data(cursor, pk, user_id, current_question_number, answer_option=selected_option)
+                    context = {
+                        'question_data': {
+                            'survey_id': next_question[1],
+                            'question_id': next_question[0],
+                            'title': next_question[2],
+                            'answered_quantity': next_question[3],
+                            'answered_rating': next_question[4],
+                            'question_text': next_question[5],
+                            'answer_option_1': next_question[6],
+                            'answer_option_2': next_question[7],
+                            'answer_option_3': next_question[8],
+                            'answer_option_4': next_question[9],
+                            'created_on': next_question[10],
+                            'redacted': next_question[11],
+                        },
+                        'form': form,
+                        'survey_id': pk,
+                        'question_number': next_question,
+                    }
+                    return render(request, 'survey/survey_detail.html', context)
+                else:
+                    was_there_any_question = check_empty_survey(cursor, pk)
+                    if was_there_any_question > 0:
+                        return redirect('statistics_page', pk=pk)
+                    elif was_there_any_question == 0:
+                        return redirect('empty_survey')
+                    else:
+                        error_message = "ошибка проверки опроса"
+                        return HttpResponseServerError(error_message)
+            else:
+                error_message = "POST - ФОРМА НЕВАЛИДНА"
+                return render(request, 'survey/survey_detail.html', context)
+        else:
+            error_message = "POST - ОТКРЫВАЮЩИЙ ВОПРОС ЕСТЬ"
+            return HttpResponseServerError(error_message)
 
-            with psycopg2.connect(**connection_params) as conn:
-                with conn.cursor() as cursor:
-                    cursor.execute('''
-                        SELECT * FROM questions
-                        WHERE id IN (
-                            SELECT MIN(id) FROM questions
-                            WHERE id NOT IN (SELECT id FROM user_answers WHERE auth_user_id = %s)
-                        )
-                    ''', [request.user.id])
-                    next_question_data = cursor.fetchone()
 
-            return redirect('survey_detail', pk=pk)
-
-    return render(request, 'survey/survey_detail.html', context)
+def check_empty_survey(cursor, pk):
+    check_empty_survey_query = f'''SELECT COUNT(*) FROM questions WHERE survey_id={pk}'''
+    cursor.execute(check_empty_survey_query)
+    survey_check = cursor.fetchone()
+    survey_check_result = survey_check[0]
+    print(survey_check_result)
+    return survey_check_result
 
 
-def statistics_detail(request):
-    return render('statistics.html')
+def get_opening_question(cursor, pk, user_id):
+    get_opening_question_query = f'''
+        SELECT * FROM questions
+        WHERE survey_id={pk} AND id NOT IN (SELECT question_id FROM user_answers WHERE auth_user_id={user_id})
+        AND id NOT IN (SELECT child_question_id FROM question_relations WHERE parent_question_id IN (SELECT question_id FROM user_answers WHERE auth_user_id={user_id}))
+    '''
+    cursor.execute(get_opening_question_query)
+    opening_question = cursor.fetchone()
+    return opening_question
+
+
+def check_next_question_existance(cursor, pk, user_id, current_question_number=None):
+    simple_check = f'''
+        SELECT * FROM questions
+        WHERE survey_id={pk} AND id NOT IN (SELECT question_id FROM user_answers WHERE auth_user_id={user_id})
+        AND id NOT IN (SELECT child_question_id FROM question_relations WHERE parent_question_id IN (SELECT question_id FROM user_answers WHERE auth_user_id={user_id}))
+    '''
+    cursor.execute(simple_check)
+    simple_check_answer = cursor.fetchone()
+    if simple_check_answer is None:
+        print("get_next_question - NONE")
+        return False
+    else:
+        print("get_next_question - PASSED")
+        print(simple_check_answer[0])
+        return True
+
+
+def get_next_question_data(cursor, pk, user_id, current_question_number, answer_option):
+    check_child_question_existence = f'''SELECT * FROM question_relations WHERE parent_question_id='{current_question_number}' AND response_condition = '{answer_option}' '''
+    cursor.execute(check_child_question_existence)
+    check_child_question_existence_result = cursor.fetchone()
+    if check_child_question_existence_result is None:
+        simple_next_question = f'''SELECT * FROM questions WHERE survey_id='{pk}' AND id NOT IN (SELECT question_id FROM user_answers WHERE auth_user_id='{user_id}') AND id NOT IN (SELECT child_question_id FROM question_relations)'''
+        cursor.execute(simple_next_question)
+        simple_next_question_result = cursor.fetchone()
+        return simple_next_question_result
+    else:
+        check_child_question_was_not_answered = f'''SELECT * FROM user_answers WHERE question_id IN (SELECT child_question_id FROM question_relations WHERE parent_question_id='{current_question_number}' AND response_condition = '{answer_option}') '''
+        cursor.execute(check_child_question_was_not_answered)
+        check_child_question_was_not_answered_result = cursor.fetchone()
+        if check_child_question_was_not_answered_result is None:
+            child_question = f'''SELECT child_question_id FROM question_relations WHERE parent_question_id='{current_question_number}' '''
+            cursor.execute(child_question)
+            child_question_result = cursor.fetchone()
+            return child_question_result
+        else:
+            simple_next_question = f'''SELECT id FROM questions WHERE survey_id='{pk}' AND id NOT IN (SELECT question_id FROM user_answers WHERE auth_user_id='{user_id}') AND id NOT IN (SELECT child_question_id FROM question_relations)'''
+            cursor.execute(simple_next_question)
+            simple_next_question_result = cursor.fetchone()
+            return simple_next_question_result
+
+
+def statistics_detail(request, pk):
+    context = {'pk': pk}
+    return render(request, 'survey/statistics.html', context=context)
 
 
 def register_view(request):
@@ -176,3 +286,10 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+
+# Страница пустого опроса (нет вопросов)
+@login_required
+def empty_survey(request):
+    template = loader.get_template('survey/empty_survey.html')
+    return HttpResponse(template.render({}, request))

@@ -26,9 +26,9 @@ class Question(models.Model):
     answered_rating = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     question_text = models.TextField()
     answer_option_1 = models.TextField()
-    answer_option_2 = models.TextField()
-    answer_option_3 = models.TextField()
-    answer_option_4 = models.TextField()
+    answer_option_2 = models.TextField(null=True, blank=True)
+    answer_option_3 = models.TextField(null=True, blank=True)
+    answer_option_4 = models.TextField(null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
     redacted = models.DateTimeField(null=True, blank=True)
 
