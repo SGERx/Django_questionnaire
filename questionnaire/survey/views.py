@@ -69,24 +69,6 @@ def survey_detail(request, pk, question_number=None):
             if opening_question:
                 print('ПОДОБРАН ОТКРЫВАЮЩИЙ ВОПРОС')
                 opening_question_length = len(opening_question)
-                # if len(opening_question[11]) != 0:
-                #     print(f'opening_question[11] - {opening_question[11]}')
-                #     opening_question_11_type=type(opening_question[11])
-                #     print(f'opening_question_11_type - {opening_question_11_type}')
-                #     options = [
-                #         (str(i + 1), answer) for i, answer in enumerate(opening_question[8:12])
-                #     ]
-                # elif len(opening_question[10]) != 0:
-                #     print(f'opening_question[10] - {opening_question[10]}')
-                #     options = [
-                #         (str(i + 1), answer) for i, answer in enumerate(opening_question[8:11])
-                #     ]
-                # elif len(opening_question[9]) != 0:
-                #     print(f'opening_question[9] - {opening_question[9]}')
-                #     options = [
-                #         (str(i + 1), answer) for i, answer in enumerate(opening_question[8:10])
-                #     ]
-                #     for i in range(11, 8, -1):
                 options = []
 
                 for i in range(11, 8, -1):
