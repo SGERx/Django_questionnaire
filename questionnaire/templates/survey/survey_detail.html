@@ -45,7 +45,7 @@
 </style>
 <h4>Прохождение опроса</h4>
 <div>
-  <form class="survey-form" method="post" action="">
+{% comment %} <form class="survey-form" method="post" action="">
     {% csrf_token %}
     <input type="hidden" name="survey_id" value="{{ question_data.survey_id }}">
     <input type="hidden" name="question_id" value="{{ question_data.question_id }}">
@@ -55,6 +55,22 @@
     </div>
     {{ form.selected_option }}
     <input class="submit-button" type="submit" value="Ответить">
+</form> {% endcomment %}
+
+
+
+<form class="survey-form" method="post" action="">
+  {% csrf_token %}
+  <input type="hidden" name="survey_id" value="{{ question_data.survey_id }}">
+  <input type="hidden" name="question_id" value="{{ question_data.question_id }}">
+  <div class="question-info">
+      <h3>{{ question_data.title }}</h3>
+      <p>{{ question_data.question_text }}</p>
+  </div>
+  {{ form.selected_option }}
+  {{ form.errors }}
+  <input class="submit-button" type="submit" value="Ответить">
 </form>
+
 </div>
 {% endblock %} 

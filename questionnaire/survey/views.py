@@ -17,6 +17,9 @@ from django.db import connection
 from django.utils import timezone
 from .forms import QuestionResponseForm
 from django.http import HttpResponseServerError
+from django.urls import reverse
+from django.http import HttpResponseRedirect
+
 
 connection_params = {
     'dbname': 'questionnaire_postgres',
@@ -69,16 +72,21 @@ def survey_detail(request, pk, question_number=None):
             if opening_question:
                 print('ПОДОБРАН ОТКРЫВАЮЩИЙ ВОПРОС')
                 opening_question_length = len(opening_question)
+                print('СОЗДАНИЕ ПЕРВОЙ ФОРМЫ GET')
                 options = []
 
                 for i in range(11, 8, -1):
                     if len(opening_question[i]) != 0:
                         print(f'opening_question[{i}] - {opening_question[i]}')
-                        options = [
+                        options.extend([
                             (str(j + 1), answer) for j, answer in enumerate(opening_question[8:i+1])
-                        ]
+                        ])
+                        print('Options:', options)
                         break
-                form = QuestionResponseForm(request.POST if request.method == 'POST' else None, options=options)
+
+                print('Options outside the loop:', options)
+
+                form = QuestionResponseForm(options=options)
 
                 print(f'ДЛИНА ОТКРЫВАЮЩЕГО ВОПРОСА - {opening_question_length}')
                 context = {
@@ -113,33 +121,81 @@ def survey_detail(request, pk, question_number=None):
                     error_message = "ошибка проверки опроса"
                     return HttpResponseServerError(error_message)
         else:
-            error_message = "в методе GET не предусмотрена передача номера вопроса"
-            return HttpResponseServerError(error_message)
+            print('XXX - В МЕТОД GET БЫЛ ПЕРЕДАН НОМЕР ВОПРОСА - НЕПРОВЕРЕННЫЙ ФУНКЦИОНАЛ! XXX')
+            passed_question = get_passed_question(cursor, pk, user_id, question_number)
+            passed_question_length = len(passed_question)
+            print('СОЗДАНИЕ ПЕРЕДАННОЙ ФОРМЫ GET')
+            options = []
+            if len(passed_question[9]) > 0:
+                for i in range(11, 8, -1):
+                    if len(passed_question[i]) != 0:
+                        print(f'opening_question[{i}] - {passed_question[i]}')
+                        options.extend([
+                            (str(j + 1), answer) for j, answer in enumerate(passed_question[8:i+1])
+                        ])
+                        print('Options:', options)
+                        break
+            else:
+                options = [('1', passed_question[8])]
+
+            print('Options outside the loop:', options)
+
+            form = QuestionResponseForm(options=options)
+
+            print(f'ДЛИНА ПЕРЕДАННОГО ВОПРОСА - {passed_question_length}')
+            context = {
+                'question_data': {
+                    'survey_id': passed_question[1],
+                    'question_id': passed_question[0],
+                    'title': passed_question[2],
+                    'answered_quantity': passed_question[3],
+                    'answered_rating': passed_question[4],
+                    'question_text': passed_question[5],
+                    'created_on': passed_question[6],
+                    'redacted': passed_question[7],
+                    'answer_option_1': passed_question[8],
+                    'answer_option_2': passed_question[9] if passed_question_length >= 10 else None,
+                    'answer_option_3': passed_question[10] if passed_question_length >= 11 else None,
+                    'answer_option_4': passed_question[11] if passed_question_length >= 12 else None,
+                },
+                'form': form,
+            }
+
+            return render(request, 'survey/survey_detail.html', context)
 
     if request.method == 'POST':
         print('МЕТОД ЗАПРОСА POST')
         if question_number is None:
-            print("POST - ОТКРЫВАЮЩЕГО ВОПРОСА НЕТ")
+            print("POST - НОМЕР СЛЕДУЮЩЕГО ВОПРОСА НЕ ПЕРЕДАН В VIEW-ФУНКЦИЮ")
             opening_question = get_opening_question(cursor, pk, user_id)
             next_question_length = len(opening_question)
+
+            print('СОЗДАНИЕ ПЕРВОЙ ФОРМЫ POST')
 
             options = []
 
             for i in range(11, 8, -1):
                 if len(opening_question[i]) != 0:
-                    options = [
+                    print(f'opening_question[{i}] - {opening_question[i]}')
+                    options.extend([
                         (str(j + 1), answer) for j, answer in enumerate(opening_question[8:i+1])
-                    ]
+                    ])
+                    print('Options:', options)
                     break
-            form = QuestionResponseForm(request.POST if request.method == 'POST' else None, options=options)
+
+            print('Options outside the loop:', options)
+
+            form = QuestionResponseForm(request.POST, options=options)
             if form.is_valid():
                 print("ФОРМА ВАЛИДНА")
                 print(f'form.cleaned_data - {form.cleaned_data}')
+                print(f"selected_option - {form.cleaned_data['selected_option']}")
+                print(f"тип возвращаемого значения - {type(form.cleaned_data['selected_option'])}")
                 selected_option = form.cleaned_data['selected_option']
                 cursor.execute('''
                     INSERT INTO user_answers (auth_user_id, question_id, selected_option, response_date)
                     VALUES (%s, %s, %s, %s)
-                ''', [request.user.id, opening_question[0], selected_option, datetime.now()])
+                ''', [request.user.id, opening_question[0], int(selected_option), datetime.now()])
 
                 connection.commit()
                 current_question_number = opening_question[0]
@@ -149,24 +205,26 @@ def survey_detail(request, pk, question_number=None):
                     print('СЛЕДУЮЩИЙ ВОПРОС ЕСТЬ')
                     next_question = get_next_question_data(cursor, pk, user_id, current_question_number, answer_option=selected_option)
                     print(f"СЛЕДУЮЩИЙ ВОПРОС ИЗ ОПРОСА {pk}, ВОПРОС НОМЕР {next_question[0]}, ДАННЫЕ: {next_question}")
-                    
-                    # options = [
-                    #     (str(i + 1), answer) for i, answer in enumerate(next_question[8:12]) if answer is not None
-                    # ]
+                    print('СОЗДАНИЕ ВТОРОЙ ФОРМЫ POST')
 
                     options = []
 
                     for i in range(11, 8, -1):
                         if len(next_question[i]) != 0:
-                            options = [
+                            print(f'opening_question[{i}] - {next_question[i]}')
+                            options.extend([
                                 (str(j + 1), answer) for j, answer in enumerate(next_question[8:i+1])
-                            ]
+                            ])
+                            print('Options:', options)
                             break
-                    form = QuestionResponseForm(request.POST if request.method == 'POST' else None, options=options)
 
+                    print('Options outside the loop:', options)
+
+                    form = QuestionResponseForm(request.POST, options=options)
                     next_question_length = len(next_question)
-
+                    
                     print(f'Длина следующего вопроса - {next_question_length}')
+                    next_question_number = next_question[0]
                     context = {
                         'question_data': {
                             'survey_id': next_question[1],
@@ -184,9 +242,13 @@ def survey_detail(request, pk, question_number=None):
                         },
                         'form': form,
                         'survey_id': pk,
-                        'question_number': next_question,
+                        'question_number': next_question_number,
                     }
-                    return render(request, 'survey/survey_detail.html', context)
+                    print(f"***КОНТЕКСТ ПЕРЕХОДА НА СЛЕДУЮЩИЙ ВОПРОС - |||{context} ||| КОНЕЦ КОНТЕКСТА")
+                    # return render(request, 'survey/survey_detail.html', context)
+                    (print(f'!ПЕРЕДАВАЕМЫЙ СЛЕДУЮЩИЙ ВОПРОС - {next_question_number}'))
+                    url = reverse('survey_detail', kwargs={'pk': pk, 'question_number': next_question_number})
+                    return HttpResponseRedirect(url)
                 else:
                     print('СЛЕДУЮЩЕГО ВОПРОСА НЕТ')
                     was_there_any_question = check_empty_survey(cursor, pk)
@@ -200,11 +262,81 @@ def survey_detail(request, pk, question_number=None):
                         error_message = "ошибка проверки опроса"
                         return HttpResponseServerError(error_message)
             else:
-                error_message = "POST - ФОРМА НЕВАЛИДНА"
+                error_message = "111 POST - ФОРМА НЕВАЛИДНА"
+                print(form.errors)
+                return HttpResponseServerError(error_message)
                 return render(request, 'survey/survey_detail.html', context)
         else:
-            error_message = "в методе POST не предусмотрена передача номера вопроса"
-            return HttpResponseServerError(error_message)
+            print('VVV - В МЕТОД POST БЫЛ ПЕРЕДАН НОМЕР ВОПРОСА - НЕПРОВЕРЕННЫЙ ФУНКЦИОНАЛ! VVV')
+            passed_question = get_passed_question(cursor, pk, user_id, question_number)
+            passed_question_length = len(passed_question)
+            print('СОЗДАНИЕ ПЕРЕДАННОЙ ФОРМЫ POST')
+            options = []
+
+            for i in range(11, 8, -1):
+                if len(passed_question[i]) != 0:
+                    print(f'opening_question[{i}] - {passed_question[i]}')
+                    options.extend([
+                        (str(j + 1), answer) for j, answer in enumerate(passed_question[8:i+1])
+                    ])
+                    print('Options:', options)
+                    break
+
+            print('Options outside the loop:', options)
+
+            form = QuestionResponseForm(request.POST, options=options)
+
+            print(f'ДЛИНА ПЕРЕДАННОГО ВОПРОСА - {passed_question_length}')
+            context = {
+                'question_data': {
+                    'survey_id': passed_question[1],
+                    'question_id': passed_question[0],
+                    'title': passed_question[2],
+                    'answered_quantity': passed_question[3],
+                    'answered_rating': passed_question[4],
+                    'question_text': passed_question[5],
+                    'created_on': passed_question[6],
+                    'redacted': passed_question[7],
+                    'answer_option_1': passed_question[8],
+                    'answer_option_2': passed_question[9] if passed_question_length >= 10 else None,
+                    'answer_option_3': passed_question[10] if passed_question_length >= 11 else None,
+                    'answer_option_4': passed_question[11] if passed_question_length >= 12 else None,
+                },
+                'form': form,
+            }
+
+            if form.is_valid():
+                if 'selected_option' in form.cleaned_data:
+                    selected_option = form.cleaned_data['selected_option']
+                else:
+                    error_message = "222 POST - ФОРМА НЕВАЛИДНА"
+                    print(form.errors)
+                    return HttpResponseServerError(error_message)
+                    return render(request, 'survey/survey_detail.html', context)
+                cursor.execute('''
+                    INSERT INTO user_answers (auth_user_id, question_id, selected_option, response_date)
+                    VALUES (%s, %s, %s, %s)
+                ''', [request.user.id, passed_question[0], int(selected_option), datetime.now()])
+
+                connection.commit()
+            next_question = get_next_question_data(cursor, pk, user_id, current_question_number=question_number, answer_option=selected_option)
+            if next_question:
+                next_question_number=next_question[0]
+                (print(f'!VVV - ПЕРЕДАВАЕМЫЙ СЛЕДУЮЩИЙ ВОПРОС - {next_question_number}'))
+                url = reverse('survey_detail', kwargs={'pk': pk, 'question_number': next_question_number})
+            else:
+                print('VVV - СЛЕДУЮЩЕГО ВОПРОСА НЕТ')
+                was_there_any_question = check_empty_survey(cursor, pk)
+                if was_there_any_question > 0:
+                    print('VVV - В ОПРОСЕ ВОПРОСЫ БЫЛИ')
+                    return redirect('statistics_page', pk=pk)
+                elif was_there_any_question == 0:
+                    print('VVV - В ОПРОСЕ ВОПРОСОВ НЕ БЫЛО')
+                    return redirect('empty_survey')
+                else:
+                    error_message = "VVV - ошибка проверки опроса"
+                    return HttpResponseServerError(error_message)
+            return HttpResponseRedirect(url)
 
 
 def check_empty_survey(cursor, pk):
@@ -224,6 +356,9 @@ def get_opening_question(cursor, pk, user_id):
     '''
     cursor.execute(get_opening_question_query)
     opening_question = cursor.fetchone()
+    print(f'???ВОЗВРАЩАЕМОЕ ЗНАЧЕНИЕ - {opening_question}')
+    simple_next_question_result_type = type(opening_question)
+    print(f'???ТИП ВОЗВРАЩАЕМОГО ЗНАЧЕНИЯ = {simple_next_question_result_type}')
     return opening_question
 
 
@@ -236,10 +371,10 @@ def check_next_question_existance(cursor, pk, user_id, current_question_number=N
     cursor.execute(simple_check)
     simple_check_answer = cursor.fetchone()
     if simple_check_answer is None:
-        print("get_next_question - NONE")
+        print("check_next_question_existance - NONE")
         return False
     else:
-        print("get_next_question - PASSED")
+        print("check_next_question_existance - PASSED")
         print(simple_check_answer[0])
         return True
 
@@ -283,6 +418,19 @@ def get_next_question_data(cursor, pk, user_id, current_question_number, answer_
             cursor.execute(simple_next_question)
             simple_next_question_result = cursor.fetchone()
             return simple_next_question_result
+
+
+def get_passed_question(cursor, pk, user_id, passed_question_number):
+    get_passed_question_query = f'''
+        SELECT * FROM questions
+        WHERE survey_id={pk} AND id={passed_question_number}
+    '''
+    cursor.execute(get_passed_question_query)
+    passed_question = cursor.fetchone()
+    print(f'XXX ВОЗВРАЩАЕМОЕ ЗНАЧЕНИЕ - {passed_question}')
+    passed_question_result_type = type(passed_question)
+    print(f'XXX ТИП ВОЗВРАЩАЕМОГО ЗНАЧЕНИЯ = {passed_question_result_type}')
+    return passed_question
 
 
 def statistics_detail(request, pk):
