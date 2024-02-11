@@ -227,9 +227,25 @@ def survey_detail_post(request, pk, question_number=None):
             current_question_number = opening_question[0]
             next_question_exists = check_next_question_existance(cursor, pk, user_id, current_question_number)
             print(f'POST СЛЕДУЮЩИЙ ВОПРОС ПРОВЕРЕН - {next_question_exists}')
-            if next_question_exists:
+            if next_question_exists is not None:
+                print(f'NEW ANOMALY - {next_question_exists}')
+                print(f'NEW ANOMALY TYPE - {type(next_question_exists)}')
                 print('POST СЛЕДУЮЩИЙ ВОПРОС ЕСТЬ')
                 next_question = get_next_question_data(cursor, pk, user_id, current_question_number, answer_option=selected_option)
+                if next_question is None:
+                    print('POST - СЛЕДУЮЩЕГО ВОПРОСА НЕТ')
+                    was_there_any_question = check_empty_survey(cursor, pk)
+                    if was_there_any_question > 0:
+                        print('POST - В ОПРОСЕ ВОПРОСЫ БЫЛИ')
+                        return redirect('statistics_page', pk=pk)
+                        # url = reverse('survey_detail', kwargs={'pk': pk, 'question_number': next_question_number})
+                    elif was_there_any_question == 0:
+                        print('POST - В ОПРОСЕ ВОПРОСОВ НЕ БЫЛО')
+                        return redirect('empty_survey')
+                    else:
+                        error_message = "ошибка проверки опроса"
+                        return HttpResponseServerError(error_message)
+
                 print(f"POST СЛЕДУЮЩИЙ ВОПРОС ИЗ ОПРОСА {pk}, ВОПРОС НОМЕР {next_question[0]}, ДАННЫЕ: {next_question}")
                 print('POST - СОЗДАНИЕ ВТОРОЙ ФОРМЫ POST')
 
@@ -439,7 +455,7 @@ def get_next_question_data(cursor, pk, user_id, current_question_number, answer_
         return simple_next_question_result
     else:
         print('!!!ДОЧЕРНИЙ ВОПРОС ЕСТЬ')
-        check_child_question_was_not_answered = f'''SELECT * FROM user_answers WHERE question_id IN (SELECT child_question_id FROM question_relations WHERE parent_question_id='{current_question_number}' AND response_condition = '{answer_option}') '''
+        check_child_question_was_not_answered = f'''SELECT * FROM user_answers WHERE auth_user_id={user_id} AND question_id IN (SELECT child_question_id FROM question_relations WHERE parent_question_id='{current_question_number}' AND response_condition = '{answer_option}') '''
         cursor.execute(check_child_question_was_not_answered)
         check_child_question_was_not_answered_result = cursor.fetchone()
 
