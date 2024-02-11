@@ -83,6 +83,43 @@ create_test_user_query = sql.SQL('''
     VALUES (%s, %s, %s, %s, %s, TRUE, TRUE, TRUE, NOW());
 ''')
 
+add_test_data_query_one = sql.SQL('''
+INSERT INTO user_answers (auth_user_id,question_id,selected_option,response_date) VALUES
+	 (2,14,2,'2024-02-11 17:54:16.360246'),
+	 (2,11,2,'2024-02-11 17:54:20.214055'),
+	 (2,12,3,'2024-02-11 17:54:22.141947'),
+	 (2,13,4,'2024-02-11 17:54:23.334487'),
+	 (2,1,2,'2024-02-11 17:54:26.393694'),
+	 (2,3,2,'2024-02-11 17:54:27.567077'),
+	 (2,7,1,'2024-02-11 17:54:28.666396'),
+	 (2,10,1,'2024-02-11 17:54:30.018367'),
+	 (3,1,4,'2024-02-11 17:55:42.216104'),
+	 (3,5,1,'2024-02-11 17:55:45.083313');
+''')
+
+add_test_data_query_two = sql.SQL('''
+INSERT INTO user_answers (auth_user_id,question_id,selected_option,response_date) VALUES
+	 (3,8,2,'2024-02-11 17:55:47.191726'),
+	 (3,11,1,'2024-02-11 17:55:51.637001'),
+	 (3,12,4,'2024-02-11 17:55:53.00419'),
+	 (3,13,2,'2024-02-11 17:55:54.082258'),
+	 (3,14,2,'2024-02-11 17:55:57.729615'),
+	 (4,1,1,'2024-02-11 17:56:53.522346'),
+	 (4,2,1,'2024-02-11 17:56:55.083828'),
+	 (4,6,1,'2024-02-11 17:56:56.899722'),
+	 (4,11,2,'2024-02-11 17:57:00.419385'),
+	 (4,12,1,'2024-02-11 17:57:02.723296');
+''')
+
+add_test_data_query_three = sql.SQL('''
+INSERT INTO user_answers (auth_user_id,question_id,selected_option,response_date) VALUES
+	 (4,13,4,'2024-02-11 17:57:03.726452'),
+	 (4,14,1,'2024-02-11 17:57:06.131054'),
+	 (5,11,1,'2024-02-11 17:57:33.343342'),
+	 (5,1,1,'2024-02-11 17:57:42.799943'),
+	 (5,2,1,'2024-02-11 17:58:56.570219');
+''')
+
 try:
     connection = psycopg2.connect(**connection_params)
     cursor = connection.cursor()
@@ -95,6 +132,12 @@ try:
     print(f"Пользователь '{test_user_three_name}' успешно создан в таблице auth_user.")
     cursor.execute(create_test_user_query, params_four)
     print(f"Пользователь '{test_user_four_name}' успешно создан в таблице auth_user.")
+    cursor.execute(add_test_data_query_one)
+    print("Первая часть тестовых ответов добавлена")
+    cursor.execute(add_test_data_query_two)
+    print("Вторая часть тестовых ответов добавлена")
+    cursor.execute(add_test_data_query_three)
+    print("Третья часть тестовых ответов добавлена")
     connection.commit()
 
 except Exception as e:

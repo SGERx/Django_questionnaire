@@ -497,10 +497,73 @@ def statistics_detail(request, pk):
     connection = psycopg2.connect(**connection_params)
     cursor = connection.cursor()
     user_id = request.user.id
-    context = {'pk': pk, 'user_id': user_id}
+    participants_quantity_query = f'''SELECT COUNT(DISTINCT auth_user_id) from user_answers WHERE question_id IN (SELECT id FROM questions WHERE survey_id={pk});'''
+    cursor.execute(participants_quantity_query)
+    participants_quantity = cursor.fetchone()
+    participants_quantity_transmission = f'Количество участников опроса - {participants_quantity}'
+
+    survey_questions_quantity_query = f'''SELECT DISTINCT(id) FROM questions WHERE survey_id={pk}'''
+    cursor.execute(survey_questions_quantity_query)
+    questions_ids = cursor.fetchall()
+    # print(f'questions_quantity - {questions_ids}')
+    # print(f'questions_quantity_len = {len(questions_ids)}')
+    answered_question_transmission = {}
+    for i in range(0, len(questions_ids)):
+        # print(f'question_id - {questions_ids[i][0]}')
+        answered_questions_query = f'''SELECT COUNT(DISTINCT auth_user_id) from user_answers WHERE question_id={questions_ids[i][0]};'''
+        cursor.execute(answered_questions_query)
+        answered_questions_quantity = cursor.fetchone()
+        answered_questions_data = f'Количество ответивших на вопрос {questions_ids[i][0]} - {answered_questions_quantity[0]}'
+        answered_question_transmission[f'{questions_ids[i][0]}'] = answered_questions_data
+
+    # print(answered_question_transmission)
+    answered_ratings_transmission = {}
+    for i in range(0, len(questions_ids)):
+        answered_ratings_transmission[f'{questions_ids[i][0]}'] = f'Доля ответивших на вопрос {questions_ids[i][0]} - {float(answered_questions_quantity[0]/participants_quantity[0])*100} %'
+
+    questions_by_ratings_query = f'''SELECT question_id, COUNT(DISTINCT auth_user_id) AS respondents_count
+    FROM user_answers
+    WHERE question_id IN (SELECT id FROM questions WHERE survey_id = {pk})
+    GROUP BY question_id
+    ORDER BY respondents_count DESC'''
+    cursor.execute(questions_by_ratings_query)
+    questions_by_ratings_quantity = cursor.fetchall()
+    questions_by_ratings = []
+    print(f'questions_by_ratings_quantity - {questions_by_ratings_quantity}')
+
+    place_counter = 0
+    for i in range(0, len(questions_by_ratings_quantity)):
+        if len(questions_by_ratings) == 0:
+            rating_record = f'Место 1 - вопрос {questions_by_ratings_quantity[i][0]}, количество ответивших - {questions_by_ratings_quantity[i][1]}'
+            questions_by_ratings.append(rating_record)
+            place_counter = place_counter+1
+        else:
+            if questions_by_ratings_quantity[i][1] == questions_by_ratings_quantity[i-1][1]:
+                rating_record = f'Место {place_counter} - вопрос {questions_by_ratings_quantity[i][0]}, количество ответивших - {questions_by_ratings_quantity[i][1]}'
+                questions_by_ratings.append(rating_record)
+            elif questions_by_ratings_quantity[i][1] < questions_by_ratings_quantity[i-1][1]:
+                # questions_by_ratings.append('попадаем в else')
+                place_counter = place_counter+1
+                rating_record = f'Место {place_counter} - вопрос {questions_by_ratings_quantity[i][0]}, количество ответивших - {questions_by_ratings_quantity[i][1]}'
+                questions_by_ratings.append(rating_record)
+
+    questions_by_ratings_transmission = questions_by_ratings
+
+    questions_answers_and_answer_percentage_query = f'''SELECT DISTINCT auth_user_id from user_answers WHERE question_id IN (SELECT id FROM questions WHERE survey_id={pk});'''
+    cursor.execute(questions_answers_and_answer_percentage_query)
+    questions_answers_and_answer_percentage_quantity = cursor.fetchone()
+    questions_answers_and_answer_percentage_transmission  = f'Кол-во ответивших на каждый из вариантов ответа и их доля от общего кол-ва ответивших на этот вопрос после завершения опроса - {questions_answers_and_answer_percentage_quantity}'
+
+    context = {
+        'pk': pk,
+        'user_id': user_id,
+        'participants_quantity': participants_quantity_transmission,
+        'answered_question': answered_question_transmission,
+        'answered_ratings': answered_ratings_transmission,
+        'questions_by_ratings': questions_by_ratings_transmission,
+        'questions_answers_and_answer_percentage': questions_answers_and_answer_percentage_transmission
+        }
     return render(request, 'survey/statistics.html', context=context)
-    # url = reverse('statistics_page', kwargs={'pk': pk, 'user_id': user_id})
-    # return HttpResponseRedirect(url)
 
 
 def register_view(request):
