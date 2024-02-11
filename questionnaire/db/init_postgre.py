@@ -101,7 +101,8 @@ def execute_custom_tables_creation(connection_parameters):
         selected_option INT NOT NULL,
         response_date TIMESTAMP NOT NULL,
         CONSTRAINT fk_auth_user FOREIGN KEY (auth_user_id) REFERENCES auth_user (id),
-        CONSTRAINT fk_questions FOREIGN KEY (question_id) REFERENCES questions (id)
+        CONSTRAINT fk_questions FOREIGN KEY (question_id) REFERENCES questions (id),
+        CONSTRAINT unique_user_question_answer UNIQUE (auth_user_id, question_id)
         );'''
         cursor.execute(create_user_answers_query)
         print("user_answers - created")
