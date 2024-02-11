@@ -138,6 +138,9 @@ def survey_detail_get(request, pk, question_number=None):
 
         print('ПЕРВОЕ РАЗДЕЛЕНИЕ - GET - XXX - В МЕТОД GET БЫЛ ПЕРЕДАН НОМЕР ВОПРОСА - НЕПРОВЕРЕННЫЙ ФУНКЦИОНАЛ! XXX')
         passed_question = get_passed_question(cursor, pk, user_id, question_number)
+        # if passed_question:
+        print(f'LATEST ANOMALY - {passed_question}')
+        print(f'LATEST ANOMALY TYPE - {type(passed_question)}')
         passed_question_length = len(passed_question)
         print('XXX - СОЗДАНИЕ ПЕРЕДАННОЙ ФОРМЫ GET')
         options = []
@@ -278,6 +281,7 @@ def survey_detail_post(request, pk, question_number=None):
                 if was_there_any_question > 0:
                     print('POST - В ОПРОСЕ ВОПРОСЫ БЫЛИ')
                     return redirect('statistics_page', pk=pk)
+                    # url = reverse('survey_detail', kwargs={'pk': pk, 'question_number': next_question_number})
                 elif was_there_any_question == 0:
                     print('POST - В ОПРОСЕ ВОПРОСОВ НЕ БЫЛО')
                     return redirect('empty_survey')
@@ -337,7 +341,6 @@ def survey_detail_post(request, pk, question_number=None):
                 error_message = "VVV POST - 222 POST - ФОРМА НЕВАЛИДНА"
                 print(form.errors)
                 return HttpResponseServerError(error_message)
-                return render(request, 'survey/survey_detail.html', context)
             cursor.execute('''
                 INSERT INTO user_answers (auth_user_id, question_id, selected_option, response_date)
                 VALUES (%s, %s, %s, %s)
@@ -361,7 +364,6 @@ def survey_detail_post(request, pk, question_number=None):
             else:
                 error_message = "VVV POST -  - ошибка проверки опроса"
                 return HttpResponseServerError(error_message)
-        return HttpResponseRedirect(url)
 
 
 def check_empty_survey(cursor, pk):
@@ -475,8 +477,13 @@ def get_passed_question(cursor, pk, user_id, passed_question_number):
 
 
 def statistics_detail(request, pk):
-    context = {'pk': pk}
+    connection = psycopg2.connect(**connection_params)
+    cursor = connection.cursor()
+    user_id = request.user.id
+    context = {'pk': pk, 'user_id': user_id}
     return render(request, 'survey/statistics.html', context=context)
+    # url = reverse('statistics_page', kwargs={'pk': pk, 'user_id': user_id})
+    # return HttpResponseRedirect(url)
 
 
 def register_view(request):
