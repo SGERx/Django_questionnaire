@@ -374,10 +374,26 @@ def check_empty_survey(cursor, pk):
 
 
 def get_opening_question(cursor, pk, user_id):
-    get_opening_question_query = f'''
-        SELECT * FROM questions
-        WHERE survey_id={pk} AND id NOT IN (SELECT question_id FROM user_answers WHERE auth_user_id={user_id})
-        AND id NOT IN (SELECT child_question_id FROM question_relations WHERE parent_question_id IN (SELECT question_id FROM user_answers WHERE auth_user_id={user_id}))
+    get_opening_question_query = '''
+    SELECT q.*
+    FROM questions q
+    WHERE q.survey_id = 1
+    AND q.id NOT IN (SELECT question_id FROM user_answers WHERE auth_user_id = 1)
+    AND (
+    q.id NOT IN (SELECT child_question_id FROM question_relations WHERE parent_question_id IS NOT NULL)
+    OR
+    q.id IN (
+    SELECT qr.child_question_id
+    FROM question_relations qr
+    JOIN user_answers ua ON qr.parent_question_id = ua.question_id
+    WHERE ua.auth_user_id = 1
+    AND (
+    qr.response_condition = ua.selected_option::VARCHAR
+    OR
+    qr.response_condition::INTEGER = ua.selected_option
+    )
+    )
+    );
     '''
     cursor.execute(get_opening_question_query)
     opening_question = cursor.fetchone()
