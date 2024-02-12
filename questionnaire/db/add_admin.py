@@ -22,11 +22,20 @@ else:
     print("Файл settings.py не найден. Убедитесь, что путь к файлу верен.")
 
 
-admin_name = input("Введите юзернейм для администратора Django: ")
-password = input("Введите пароль для администратора Django: ")
-email = input("Введите email администратора Django: ")
-first_name = input("Введите имя администратора Django: ")
-last_name = input("Введите фамилию администратора Django: ")
+default_values = input("Использовать значения по умолчанию для создания администратора Django? [y/n] ")
+if default_values.upper() == 'Y':
+    print("логин - admin, пароль - admin")
+    admin_name = 'admin'
+    password = 'admin'
+    email = 'admin@admin.com'
+    first_name = 'admin'
+    last_name = 'admin'
+elif default_values.upper() == 'N':
+    admin_name = input("Введите юзернейм для администратора Django: ")
+    password = input("Введите пароль для администратора Django: ")
+    email = input("Введите email администратора Django: ")
+    first_name = input("Введите имя администратора Django: ")
+    last_name = input("Введите фамилию администратора Django: ")
 
 hashed_password = make_password(password)
 

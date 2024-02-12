@@ -36,25 +36,10 @@ def execute_custom_tables_creation(connection_parameters):
     print("STARTING CUSTOM TABLES CREATION")
     connection = psycopg2.connect(**connection_parameters)
     cursor = connection.cursor()
-    print("participants")
+
+    print("surveys")
     try:
-        create_users_query = '''CREATE TABLE IF NOT EXISTS participants(
-        id serial PRIMARY KEY,
-        username VARCHAR (30) UNIQUE NOT NULL,
-        password_hash VARCHAR(255) NOT NULL,
-        password_salt VARCHAR(255) NOT NULL,
-        email VARCHAR (30) UNIQUE NOT NULL,
-        created_on TIMESTAMP NOT NULL,
-        last_login TIMESTAMP
-        ); '''
-        cursor.execute(create_users_query)
-        print("participants - created")
-    except Exception as e:
-        connection.rollback()
-        print(f"Error: {e}")
-    print("polls")
-    try:
-        create_polls_query = '''CREATE TABLE IF NOT EXISTS polls(
+        create_surveys_query = '''CREATE TABLE IF NOT EXISTS surveys(
         id serial PRIMARY KEY,
         title VARCHAR (50) UNIQUE NOT NULL,
         description TEXT,
@@ -62,8 +47,8 @@ def execute_custom_tables_creation(connection_parameters):
         created_on TIMESTAMP NOT NULL,
         redacted TIMESTAMP
         );'''
-        cursor.execute(create_polls_query)
-        print("polls - created")
+        cursor.execute(create_surveys_query)
+        print("surveys - created")
     except Exception as e:
         connection.rollback()
         print(f"Error: {e}")
@@ -71,51 +56,59 @@ def execute_custom_tables_creation(connection_parameters):
     try:
         create_questions_query = '''CREATE TABLE IF NOT EXISTS questions(
         id serial PRIMARY KEY,
-        poll_id INT NOT NULL,
-        participants INT DEFAULT 0 NOT NULL,
-        answered_rating INT DEFAULT 0 NOT NULL,
+        survey_id INT NOT NULL,
+        title VARCHAR (50) NOT NULL,
+        answered_quantity INT DEFAULT 0 NOT NULL,
+        answered_rating DECIMAL(5, 2) DEFAULT 0 NOT NULL,
         question_text TEXT,
         created_on TIMESTAMP NOT NULL,
         redacted TIMESTAMP,
-        CONSTRAINT fk_polls FOREIGN KEY(poll_id) REFERENCES polls(id)
+        answer_option_1 TEXT,
+        answer_option_2 TEXT,
+        answer_option_3 TEXT,
+        answer_option_4 TEXT,
+
+        CONSTRAINT fk_surveys FOREIGN KEY(survey_id) REFERENCES surveys(id)
         );'''
         cursor.execute(create_questions_query)
         print("questions - created")
     except Exception as e:
         connection.rollback()
         print(f"Error: {e}")
-    print("answer_options")
+
+    print("question_relations")
     try:
-        create_answer_options_query = '''CREATE TABLE IF NOT EXISTS answer_options(
+        create_questions_query = '''CREATE TABLE IF NOT EXISTS question_relations (
         id serial PRIMARY KEY,
-        question_id INT NOT NULL,
-        option_text TEXT NOT NULL,
-        created_on TIMESTAMP NOT NULL,
-        redacted TIMESTAMP,
-        CONSTRAINT fk_question FOREIGN KEY (question_id) REFERENCES questions (id)
+        parent_question_id INT NOT NULL,
+        child_question_id INT NOT NULL,
+        response_condition VARCHAR(255),
+        FOREIGN KEY (parent_question_id) REFERENCES questions(id),
+        FOREIGN KEY (child_question_id) REFERENCES questions(id)
         );'''
-        cursor.execute(create_answer_options_query)
-        print("answer_options - created")
-    except Exception as e:
-        connection.rollback()
-        print(f"Error: {e}")
-    print("answers")
-    try:
-        create_answers_query = '''CREATE TABLE IF NOT EXISTS answers(
-        id serial PRIMARY KEY,
-        participants_id INT NOT NULL,
-        question_id INT NOT NULL,
-        response_text TEXT ,
-        response_date TIMESTAMP NOT NULL,
-        CONSTRAINT fk_participants FOREIGN KEY (participants_id) REFERENCES participants (id),
-        CONSTRAINT fk_questions FOREIGN KEY (question_id) REFERENCES questions (id)
-        );'''
-        cursor.execute(create_answers_query)
-        print("answers - created")
+        cursor.execute(create_questions_query)
+        print("question_relations - created")
     except Exception as e:
         connection.rollback()
         print(f"Error: {e}")
 
+    print("user_answers")
+    try:
+        create_user_answers_query = '''CREATE TABLE IF NOT EXISTS user_answers(
+        id serial PRIMARY KEY,
+        auth_user_id INT NOT NULL,
+        question_id INT NOT NULL,
+        selected_option INT NOT NULL,
+        response_date TIMESTAMP NOT NULL,
+        CONSTRAINT fk_auth_user FOREIGN KEY (auth_user_id) REFERENCES auth_user (id),
+        CONSTRAINT fk_questions FOREIGN KEY (question_id) REFERENCES questions (id),
+        CONSTRAINT unique_user_question_answer UNIQUE (auth_user_id, question_id)
+        );'''
+        cursor.execute(create_user_answers_query)
+        print("user_answers - created")
+    except Exception as e:
+        connection.rollback()
+        print(f"Error: {e}")
     finally:
         connection.commit()
         connection.close()
@@ -129,25 +122,23 @@ def execute_index_creation(connection_parameters):
 
     try:
 
-        create_users_index_username = '''CREATE INDEX IF NOT EXISTS idx_participants_username ON participants(username);'''
+        create_users_index_username = '''CREATE INDEX IF NOT EXISTS idx_auth_user_username ON auth_user(username);'''
         cursor.execute(create_users_index_username)
-        create_users_index_email = '''CREATE INDEX IF NOT EXISTS idx_participants_email ON participants(email);'''
+        create_users_index_email = '''CREATE INDEX IF NOT EXISTS idx_auth_user_email ON auth_user(email);'''
         cursor.execute(create_users_index_email)
-        create_users_index_last_login = '''CREATE INDEX IF NOT EXISTS idx_participants_last_login ON participants(last_login);'''
+        create_users_index_last_login = '''CREATE INDEX IF NOT EXISTS idx_auth_user_last_login ON auth_user(last_login);'''
         cursor.execute(create_users_index_last_login)
 
-        create_polls_index_title = '''CREATE INDEX IF NOT EXISTS idx_polls_title ON polls(title);'''
-        cursor.execute(create_polls_index_title)
+        create_surveys_index_title = '''CREATE INDEX IF NOT EXISTS idx_surveys_title ON surveys(title);'''
+        cursor.execute(create_surveys_index_title)
 
-        create_question_index_question_polls_id = '''CREATE INDEX IF NOT EXISTS idx_questions_poll_id ON questions(poll_id);'''
-        cursor.execute(create_question_index_question_polls_id)
+        create_question_index_question_surveys_id = '''CREATE INDEX IF NOT EXISTS idx_questions_survey_id ON questions(survey_id);'''
+        cursor.execute(create_question_index_question_surveys_id)
 
-        create_answers_index_users_id = '''CREATE INDEX IF NOT EXISTS idx_answers_participants_id ON answers(participants_id);'''
-        cursor.execute(create_answers_index_users_id)
-        create_answers_index_question_id = '''CREATE INDEX IF NOT EXISTS idx_answers_question_id ON answers(question_id);'''
-        cursor.execute(create_answers_index_question_id)
-        create_answers_options_index_question_id = '''CREATE INDEX IF NOT EXISTS idx_answer_options_question_id ON answer_options(question_id);'''
-        cursor.execute(create_answers_options_index_question_id)
+        create_user_answers_index_users_id = '''CREATE INDEX IF NOT EXISTS idx_user_answers_auth_user_id ON user_answers(auth_user_id);'''
+        cursor.execute(create_user_answers_index_users_id)
+        create_user_answers_index_question_id = '''CREATE INDEX IF NOT EXISTS idx_user_answers_question_id ON user_answers(question_id);'''
+        cursor.execute(create_user_answers_index_question_id)
 
         connection.commit()
 
@@ -352,6 +343,6 @@ creation_params = {
 
 
 execute_db_creation(creation_params, database_name)
+execute_built_in_django_tables_creation(connection_parameters)
 execute_custom_tables_creation(connection_parameters)
 execute_index_creation(connection_parameters)
-execute_built_in_django_tables_creation(connection_parameters)
