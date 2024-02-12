@@ -1,33 +1,143 @@
-<!DOCTYPE html>
-<html>
+{% extends 'survey/base.html' %}
+{% block title %}
+  Опросы
+{% endblock %} 
+{% block content %}
+
+<style>
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        margin: 0;
+        font-family: "Roboto", sans-serif;
+    }
+    
+    header {
+        background-color: #ffffff;
+        padding: 20px;
+        text-align: center;
+    }
+
+    footer {
+        background-color: #ffffff;
+        padding: 20px;
+        text-align: center;
+        margin-top: auto;
+    }
+
+    main {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    table {
+        width: 80%;  /* Увеличил ширину таблицы */
+        border-top: 7px solid #333333;
+        border-collapse: collapse;
+        text-align: center;
+        margin-bottom: 20px;
+        border: 1px solid #333333;
+    }
+
+    td, th {
+        text-align: center;
+        padding: 10px;
+        border: 1px solid #333333;
+    }
+
+    td:first-child,
+    th:first-child {
+        width: 30%;
+    }
+
+    td:last-child,
+    th:last-child {
+        width: 90%;
+    }
+
+    td ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    td li {
+        padding: 5px 0;
+    }
+</style>
+
 <head>
     <title>Статистика опроса {{ pk }}</title>
 </head>
+
 <body>
-    <h1>Статистика опроса {{ pk }}</h1>
-    <h3>Количество участников опроса - {{ participants_quantity }}</h3>
+    <header>
+        <h1>Статистика опроса {{ pk }}</h1>
+    </header>
 
-    <h3>Количество ответивших на вопросы - по номерам</h3>
-    {% for answers in answered_question %}
-        <li>{{answers}}</li>
-    {% endfor %}
+    <main>
+        <table>
+            <thead>
+                <tr>
+                    <th>Какие данные</th>
+                    <th>Сами данные</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Количество участников опроса</td>
+                    <td>{{ participants_quantity }}</td>
+                </tr>
 
-    <h3>Доля ответивших на вопросы от общего числа участников опроса</h3> 
-    {% for ansrat in answered_ratings %}
-        <li>{{ansrat}}</li>
-    {% endfor %}
+                <tr>
+                    <td>Количество ответивших на вопросы - по номерам</td>
+                    <td>
+                        <ul>
+                            {% for answers in answered_question %}
+                                <li>{{ answers }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
 
-    <h3>Рейтинг вопросов по количеству ответивших</h3>
-    {% for rating in questions_by_ratings %}
-        <li>{{rating}}</li>
-    {% endfor %}
+                <tr>
+                    <td>Доля ответивших на вопросы от общего числа участников опроса</td> 
+                    <td>
+                        <ul>
+                            {% for ansrat in answered_ratings %}
+                                <li>{{ ansrat }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
 
-        <h3>Количество ответивших на каждый из вариантов ответа и их доля от общего количества ответивших на этот вопрос</h3>
-        {% for statistics in questions_answers_and_answer_percentage %}
-            <li>{{statistics}}</li>
-        {% endfor %}
+                <tr>
+                    <td>Рейтинг вопросов по количеству ответивших</td>
+                    <td>
+                        <ul>
+                            {% for rating in questions_by_ratings %}
+                                <li>{{ rating }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>Количество ответивших на каждый из вариантов ответа, доля от общего количества ответивших на этот вопрос</td>
+                    <td>
+                        <ul>
+                            {% for statistics in questions_answers_and_answer_percentage %}
+                                <li>{{ statistics }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </main>
 </body>
-</html>
-
-
-
+{% endblock %}

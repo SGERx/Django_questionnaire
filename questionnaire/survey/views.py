@@ -516,7 +516,7 @@ def statistics_detail(request, pk):
         answered_questions_quantity = cursor.fetchone()
         print(f'ORIGINAL answered_questions_quantity - {answered_questions_quantity[0]}')
         answered_question_storage.append(answered_questions_quantity[0])
-        answered_questions_data = f'Количество ответивших на вопрос {questions_ids[i][0]} - {answered_questions_quantity[0]}'
+        answered_questions_data = f'Количество ответивших на вопрос {i+1} - {answered_questions_quantity[0]}'
         answered_question_transmission.append(answered_questions_data)
 
     print(f'answered_question_storage - {answered_question_storage}')
@@ -525,9 +525,9 @@ def statistics_detail(request, pk):
         print(f'answered_question_storage[0] - {answered_question_storage[0]}')
         print(f'TYPE answered_question_storage[0] - {type(answered_question_storage[0])}')
         if answered_question_storage[i] > 0:
-            answered_ratings_data = f'Доля ответивших на вопрос {questions_ids[i][0]} - {float(answered_question_storage[i]/participants_quantity[0])*100}%'
+            answered_ratings_data = f'Доля ответивших на вопрос {i+1} - {float(answered_question_storage[i]/participants_quantity[0])*100}%'
         else:
-            answered_ratings_data = f'Доля ответивших на вопрос {questions_ids[i][0]} - 0%'
+            answered_ratings_data = f'Доля ответивших на вопрос {i+1} - 0%'
         answered_ratings_transmission.append(answered_ratings_data)
 
     questions_by_ratings_query = f'''SELECT question_id, COUNT(DISTINCT auth_user_id) AS respondents_count
@@ -543,17 +543,17 @@ def statistics_detail(request, pk):
     place_counter = 0
     for i in range(0, len(questions_by_ratings_quantity)):
         if len(questions_by_ratings) == 0:
-            rating_record = f'Место 1 - вопрос {questions_by_ratings_quantity[i][0]}, количество ответивших - {questions_by_ratings_quantity[i][1]}'
+            rating_record = f'Место 1 - вопрос с ID {questions_by_ratings_quantity[i][0]}, количество ответивших - {questions_by_ratings_quantity[i][1]}'
             questions_by_ratings.append(rating_record)
             place_counter = place_counter+1
         else:
             if questions_by_ratings_quantity[i][1] == questions_by_ratings_quantity[i-1][1]:
-                rating_record = f'Место {place_counter} - вопрос {questions_by_ratings_quantity[i][0]}, количество ответивших - {questions_by_ratings_quantity[i][1]}'
+                rating_record = f'Место {place_counter} - вопрос с ID {questions_by_ratings_quantity[i][0]}, количество ответивших - {questions_by_ratings_quantity[i][1]}'
                 questions_by_ratings.append(rating_record)
             elif questions_by_ratings_quantity[i][1] < questions_by_ratings_quantity[i-1][1]:
                 # questions_by_ratings.append('попадаем в else')
                 place_counter = place_counter+1
-                rating_record = f'Место {place_counter} - вопрос {questions_by_ratings_quantity[i][0]}, количество ответивших - {questions_by_ratings_quantity[i][1]}'
+                rating_record = f'Место {place_counter} - вопрос с ID {questions_by_ratings_quantity[i][0]}, количество ответивших - {questions_by_ratings_quantity[i][1]}'
                 questions_by_ratings.append(rating_record)
 
     questions_by_ratings_transmission = questions_by_ratings
