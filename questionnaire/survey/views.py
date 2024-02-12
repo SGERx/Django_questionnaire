@@ -500,26 +500,35 @@ def statistics_detail(request, pk):
     participants_quantity_query = f'''SELECT COUNT(DISTINCT auth_user_id) from user_answers WHERE question_id IN (SELECT id FROM questions WHERE survey_id={pk});'''
     cursor.execute(participants_quantity_query)
     participants_quantity = cursor.fetchone()
-    participants_quantity_transmission = f'Количество участников опроса - {participants_quantity}'
+    participants_quantity_transmission = participants_quantity[0]
 
     survey_questions_quantity_query = f'''SELECT DISTINCT(id) FROM questions WHERE survey_id={pk}'''
     cursor.execute(survey_questions_quantity_query)
     questions_ids = cursor.fetchall()
     # print(f'questions_quantity - {questions_ids}')
     # print(f'questions_quantity_len = {len(questions_ids)}')
-    answered_question_transmission = {}
+    answered_question_transmission = []
+    answered_question_storage = []
     for i in range(0, len(questions_ids)):
         # print(f'question_id - {questions_ids[i][0]}')
         answered_questions_query = f'''SELECT COUNT(DISTINCT auth_user_id) from user_answers WHERE question_id={questions_ids[i][0]};'''
         cursor.execute(answered_questions_query)
         answered_questions_quantity = cursor.fetchone()
+        print(f'ORIGINAL answered_questions_quantity - {answered_questions_quantity[0]}')
+        answered_question_storage.append(answered_questions_quantity[0])
         answered_questions_data = f'Количество ответивших на вопрос {questions_ids[i][0]} - {answered_questions_quantity[0]}'
-        answered_question_transmission[f'{questions_ids[i][0]}'] = answered_questions_data
+        answered_question_transmission.append(answered_questions_data)
 
-    # print(answered_question_transmission)
-    answered_ratings_transmission = {}
+    print(f'answered_question_storage - {answered_question_storage}')
+    answered_ratings_transmission = []
     for i in range(0, len(questions_ids)):
-        answered_ratings_transmission[f'{questions_ids[i][0]}'] = f'Доля ответивших на вопрос {questions_ids[i][0]} - {float(answered_questions_quantity[0]/participants_quantity[0])*100} %'
+        print(f'answered_question_storage[0] - {answered_question_storage[0]}')
+        print(f'TYPE answered_question_storage[0] - {type(answered_question_storage[0])}')
+        if answered_question_storage[i] > 0:
+            answered_ratings_data = f'Доля ответивших на вопрос {questions_ids[i][0]} - {float(answered_question_storage[i]/participants_quantity[0])*100}%'
+        else:
+            answered_ratings_data = f'Доля ответивших на вопрос {questions_ids[i][0]} - 0%'
+        answered_ratings_transmission.append(answered_ratings_data)
 
     questions_by_ratings_query = f'''SELECT question_id, COUNT(DISTINCT auth_user_id) AS respondents_count
     FROM user_answers
@@ -529,7 +538,7 @@ def statistics_detail(request, pk):
     cursor.execute(questions_by_ratings_query)
     questions_by_ratings_quantity = cursor.fetchall()
     questions_by_ratings = []
-    print(f'questions_by_ratings_quantity - {questions_by_ratings_quantity}')
+    # print(f'questions_by_ratings_quantity - {questions_by_ratings_quantity}')
 
     place_counter = 0
     for i in range(0, len(questions_by_ratings_quantity)):
@@ -549,11 +558,133 @@ def statistics_detail(request, pk):
 
     questions_by_ratings_transmission = questions_by_ratings
 
-    questions_answers_and_answer_percentage_query = f'''SELECT DISTINCT auth_user_id from user_answers WHERE question_id IN (SELECT id FROM questions WHERE survey_id={pk});'''
-    cursor.execute(questions_answers_and_answer_percentage_query)
-    questions_answers_and_answer_percentage_quantity = cursor.fetchone()
-    questions_answers_and_answer_percentage_transmission  = f'Кол-во ответивших на каждый из вариантов ответа и их доля от общего кол-ва ответивших на этот вопрос после завершения опроса - {questions_answers_and_answer_percentage_quantity}'
+    questions_answers_and_answer_quantity_query = f'''SELECT question_id, selected_option, COUNT(auth_user_id) AS response_count
+    FROM user_answers
+    WHERE question_id IN (SELECT id FROM questions WHERE survey_id = {pk})
+    GROUP BY question_id, selected_option;'''
+    cursor.execute(questions_answers_and_answer_quantity_query)
+    answers_data = cursor.fetchall()
+    print(f'Данные ответов пользователей на вопросы опроса - {answers_data}')
+    question_quantity_in_survey_query = f'''SELECT id, answer_option_1, answer_option_2, answer_option_3, answer_option_4 FROM questions WHERE survey_id = {pk};'''
+    cursor.execute(question_quantity_in_survey_query)
+    questions_data = cursor.fetchall()
+    print(f'Данные вопросов и ответов опроса - {questions_data}')
+    gathered_answered_question_id = []
 
+
+
+
+    for k in range(0, len(answers_data)):
+        if answers_data[k][0] not in gathered_answered_question_id: 
+            gathered_answered_question_id.append(answers_data[k][0])
+    print(f'Собранные ID отвеченных вопросов - {gathered_answered_question_id}')
+
+
+
+
+    total_answers_for_question_dict_counter = {}
+    for g in range(0, len(questions_data)):
+        total_answers_for_question_dict_counter[questions_data[g][0]] = 0
+    for g in range(0, len(questions_data)):
+        if questions_data[g][0] in gathered_answered_question_id:
+            for h in range(0, len(answers_data)):
+                if answers_data[h][0] == questions_data[g][0]:
+                    total_answers_for_question_dict_counter[questions_data[g][0]] = total_answers_for_question_dict_counter[questions_data[g][0]] + answers_data[h][2]
+
+    print(total_answers_for_question_dict_counter)
+    transmission_data = []
+    for i in range(0, len(questions_data)):
+        question_options_counter = [0, 0, 0, 0]
+        if questions_data[i][4]:
+            # print(f'Проверяем id вопроса - {questions_and_answer_options[i][0]}')
+            # print(f'Вопрос {i+1} - 4 варианта ответа')
+            if questions_data[i][0] in gathered_answered_question_id:
+                # print('на вопрос был дан ответ, ищем данные')
+                for b in range(0, len(answers_data)):
+                    if answers_data[b][0] != questions_data[i][0]:
+                        continue
+                    else:
+                        # print(f'НАЙДЕН НУЖНЫЙ ОТВЕТ В ДАННЫХ - ЗНАЧЕНИЕ {answers_data[b][0]} - ID {answers_data[b][0]}')
+                        if answers_data[b][1] == 1:
+                            question_options_counter[0] = question_options_counter[0] + answers_data[b][2]
+                        if answers_data[b][1] == 2:
+                            question_options_counter[1] = question_options_counter[1] + answers_data[b][2]
+                        if answers_data[b][1] == 3:
+                            question_options_counter[2] = question_options_counter[2] + answers_data[b][2]
+                        if answers_data[b][1] == 4:
+                            question_options_counter[3] = question_options_counter[3] + answers_data[b][2]
+            print(f"Вопрос {i+1} - ответ 1 - вариант '{questions_data[i][1]}' - количество выборов - {question_options_counter[0]}, доля от общих ответов на вопрос - {int(question_options_counter[0]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%")
+            print(f"Вопрос {i+1} - ответ 2 - вариант '{questions_data[i][2]}' - количество выборов - {question_options_counter[1]}, доля от общих ответов на вопрос - {int(question_options_counter[1]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%")
+            print(f"Вопрос {i+1} - ответ 3 - вариант '{questions_data[i][3]}' - количество выборов - {question_options_counter[2]}, доля от общих ответов на вопрос - {int(question_options_counter[2]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%")
+            print(f"Вопрос {i+1} - ответ 4 - вариант '{questions_data[i][4]}' - количество выборов - {question_options_counter[3]}, доля от общих ответов на вопрос - {int(question_options_counter[3]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%")
+            stats_data_one = f"Вопрос {i+1} - ответ 1 - вариант '{questions_data[i][1]}' - количество выборов - {question_options_counter[0]}, доля от общих ответов на вопрос - {int(question_options_counter[0]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%"
+            stats_data_two = f"Вопрос {i+1} - ответ 2 - вариант '{questions_data[i][2]}' - количество выборов - {question_options_counter[1]}, доля от общих ответов на вопрос - {int(question_options_counter[1]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%"
+            stats_data_three = f"Вопрос {i+1} - ответ 3 - вариант '{questions_data[i][3]}' - количество выборов - {question_options_counter[2]}, доля от общих ответов на вопрос - {int(question_options_counter[2]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%"
+            stats_data_four = f"Вопрос {i+1} - ответ 4 - вариант '{questions_data[i][4]}' - количество выборов - {question_options_counter[3]}, доля от общих ответов на вопрос - {int(question_options_counter[3]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%"
+            transmission_data.append(stats_data_one)
+            transmission_data.append(stats_data_two)
+            transmission_data.append(stats_data_three)
+            transmission_data.append(stats_data_four)
+        elif questions_data[i][3]:
+            # print(f'Проверяем id вопроса - {answers_data[i][0]}')
+            # print(f'Вопрос {i+1} - 3 варианта ответа')
+            if questions_data[i][0] in gathered_answered_question_id:
+                # print('на вопрос был дан ответ, ищем данные')
+                for b in range(0, len(answers_data)):
+                    if answers_data[b][0] != questions_data[i][0]:
+                        continue
+                    else:
+                        # print(f'НАЙДЕН НУЖНЫЙ ОТВЕТ В ДАННЫХ - ЗНАЧЕНИЕ {questions_answers_and_answer_quantity[b][0]} - ID {questions_answers_and_answer_quantity[b][0]}')
+                        if answers_data[b][1] == 1:
+                            question_options_counter[0] = question_options_counter[0] + answers_data[b][2]
+                        if answers_data[b][1] == 2:
+                            question_options_counter[1] = question_options_counter[1] + answers_data[b][2]
+                        if answers_data[b][1] == 3:
+                            question_options_counter[2] = question_options_counter[2] + answers_data[b][2]
+                        if answers_data[b][1] == 4:
+                            question_options_counter[3] = question_options_counter[3] + answers_data[b][2]
+            print(f"Вопрос {i+1} - ответ 1 - вариант '{questions_data[i][1]}' - количество выборов - {question_options_counter[0]}, доля от общих ответов на вопрос - {int(question_options_counter[0]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%")
+            print(f"Вопрос {i+1} - ответ 2 - вариант '{questions_data[i][2]}' - количество выборов - {question_options_counter[1]}, доля от общих ответов на вопрос - {int(question_options_counter[1]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%")
+            print(f"Вопрос {i+1} - ответ 3 - вариант '{questions_data[i][3]}' - количество выборов - {question_options_counter[2]}, доля от общих ответов на вопрос - {int(question_options_counter[2]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%")
+            stats_data_one = f"Вопрос {i+1} - ответ 1 - вариант '{questions_data[i][1]}' - количество выборов - {question_options_counter[0]}, доля от общих ответов на вопрос - {int(question_options_counter[0]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%"
+            stats_data_two = f"Вопрос {i+1} - ответ 2 - вариант '{questions_data[i][2]}' - количество выборов - {question_options_counter[1]}, доля от общих ответов на вопрос - {int(question_options_counter[1]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%"
+            stats_data_three = f"Вопрос {i+1} - ответ 3 - вариант '{questions_data[i][3]}' - количество выборов - {question_options_counter[2]}, доля от общих ответов на вопрос - {int(question_options_counter[2]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%"
+            transmission_data.append(stats_data_one)
+            transmission_data.append(stats_data_two)
+            transmission_data.append(stats_data_three)
+        else:
+
+            # print(f'Проверяем id вопроса - {questions_and_answer_options[i][0]}')
+            # print(f'Вопрос {i+1} - 2 варианта ответа')
+            if questions_data[i][0] in gathered_answered_question_id:
+                # print('на вопрос был дан ответ, ищем данные')
+                for b in range(0, len(answers_data)):
+                    if answers_data[b][0] != questions_data[i][0]:
+                        continue
+                    else:
+                        # print(f'НАЙДЕН НУЖНЫЙ ОТВЕТ В ДАННЫХ - ЗНАЧЕНИЕ {questions_answers_and_answer_quantity[b][0]} - ID {questions_answers_and_answer_quantity[b][0]}')
+                        if answers_data[b][1] == 1:
+                            question_options_counter[0] = question_options_counter[0] + answers_data[b][2]
+                        if answers_data[b][1] == 2:
+                            question_options_counter[1] = question_options_counter[1] + answers_data[b][2]
+                        if answers_data[b][1] == 3:
+                            question_options_counter[2] = question_options_counter[2] + answers_data[b][2]
+                        if answers_data[b][1] == 4:
+                            question_options_counter[3] = question_options_counter[3] + answers_data[b][2]
+                print(f"Вопрос {i+1} - ответ 1 - вариант '{questions_data[i][1]}' - количество выборов - {question_options_counter[0]}, доля от общих ответов на вопрос - {int(question_options_counter[0]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%")
+                print(f"Вопрос {i+1} - ответ 2 - вариант '{questions_data[i][2]}' - количество выборов - {question_options_counter[1]}, доля от общих ответов на вопрос - {int(question_options_counter[1]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%")
+                stats_data_one = f"Вопрос {i+1} - ответ 1 - вариант '{questions_data[i][1]}' - количество выборов - {question_options_counter[0]}, доля от общих ответов на вопрос - {int(question_options_counter[0]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%"
+                stats_data_two = f"Вопрос {i+1} - ответ 2 - вариант '{questions_data[i][2]}' - количество выборов - {question_options_counter[1]}, доля от общих ответов на вопрос - {int(question_options_counter[1]/total_answers_for_question_dict_counter[questions_data[i][0]]*100)}%"
+                transmission_data.append(stats_data_one)
+                transmission_data.append(stats_data_two)
+            else:
+                print(f"Вопрос {i+1} - ответ 1 - вариант '{questions_data[i][1]}' - количество выборов - 0, доля от общих ответов на вопрос - 0%")
+                print(f"Вопрос {i+1} - ответ 2 - вариант '{questions_data[i][2]}' - количество выборов - 0, доля от общих ответов на вопрос - 0%")
+                stats_data_one = f"Вопрос {i+1} - ответ 1 - вариант '{questions_data[i][1]}' - количество выборов - 0, доля от общих ответов на вопрос - 0%"
+                stats_data_two = f"Вопрос {i+1} - ответ 2 - вариант '{questions_data[i][2]}' - количество выборов - 0, доля от общих ответов на вопрос - 0%"
+                transmission_data.append(stats_data_one)
+                transmission_data.append(stats_data_two)
+    questions_answers_and_answer_quantity_transmission  = transmission_data
     context = {
         'pk': pk,
         'user_id': user_id,
@@ -561,7 +692,7 @@ def statistics_detail(request, pk):
         'answered_question': answered_question_transmission,
         'answered_ratings': answered_ratings_transmission,
         'questions_by_ratings': questions_by_ratings_transmission,
-        'questions_answers_and_answer_percentage': questions_answers_and_answer_percentage_transmission
+        'questions_answers_and_answer_percentage': questions_answers_and_answer_quantity_transmission
         }
     return render(request, 'survey/statistics.html', context=context)
 

@@ -4,11 +4,30 @@
     <title>Статистика опроса {{ pk }}</title>
 </head>
 <body>
-    <h1>Статистика опроса {{ pk }} для пользователя {{ user_id }}</h1>
-    <h4>{{ participants_quantity }}</h4>
-    <h4>{{ answered_question }}</h4>
-    <h4>{{ answered_ratings }}</h4>
-    <h4>{{ questions_by_ratings }}</h4>
-    <h4>{{ questions_answers_and_answer_percentage }}</h4>
+    <h1>Статистика опроса {{ pk }}</h1>
+    <h3>Количество участников опроса - {{ participants_quantity }}</h3>
+
+    <h3>Количество ответивших на вопросы - по номерам</h3>
+    {% for answers in answered_question %}
+        <li>{{answers}}</li>
+    {% endfor %}
+
+    <h3>Доля ответивших на вопросы от общего числа участников опроса</h3> 
+    {% for ansrat in answered_ratings %}
+        <li>{{ansrat}}</li>
+    {% endfor %}
+
+    <h3>Рейтинг вопросов по количеству ответивших</h3>
+    {% for rating in questions_by_ratings %}
+        <li>{{rating}}</li>
+    {% endfor %}
+
+        <h3>Количество ответивших на каждый из вариантов ответа и их доля от общего количества ответивших на этот вопрос</h3>
+        {% for statistics in questions_answers_and_answer_percentage %}
+            <li>{{statistics}}</li>
+        {% endfor %}
 </body>
 </html>
+
+
+
