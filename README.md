@@ -32,7 +32,7 @@
 
 1) Скачать проект:
 ```
-git@github.com:SGERx/Django_questionnaire.git
+git clone git@github.com:SGERx/Django_questionnaire.git
 ```
 2) Установить и активировать виртуальное окружение
 
