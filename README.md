@@ -5,10 +5,10 @@
 С целью изучения PostgreSQL и системных таблиц Django проект написан без использования Django ORM.
 
 ### Технологии
-Python 3.9
-Django 4.2.9
-psycopg2 2.9.9
-PostgreSQL
+- Python 3.9
+- Django 4.2.9
+- psycopg2 2.9.9
+- PostgreSQL
 
 ### Возможности проекта:
 
