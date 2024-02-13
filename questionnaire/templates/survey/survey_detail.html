@@ -1,0 +1,63 @@
+{% extends 'survey/base.html' %}
+{% block title %}
+  Опросы
+{% endblock %} 
+{% block content %}
+
+<style>
+  .survey-form {
+    max-width: 500px;
+    margin: 20px auto 0;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f8f8f8;
+}
+
+.question-info {
+    margin-bottom: 20px;
+}
+
+.question-info h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.question-info p {
+  font-size: 16px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.submit-button {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.submit-button:hover {
+    background-color: #45a049;
+}
+</style>
+<h4>Прохождение опроса</h4>
+<div>
+
+<form class="survey-form" method="post" action="">
+  {% csrf_token %}
+  <input type="hidden" name="survey_id" value="{{ question_data.survey_id }}">
+  <input type="hidden" name="question_id" value="{{ question_data.question_id }}">
+  <div class="question-info">
+      <h3>{{ question_data.title }}</h3>
+      <p>{{ question_data.question_text }}</p>
+  </div>
+  {{ form.selected_option }}
+  {{ form.errors }}
+  <input class="submit-button" type="submit" value="Ответить">
+</form>
+
+</div>
+{% endblock %} 

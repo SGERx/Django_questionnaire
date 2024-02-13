@@ -1,0 +1,21 @@
+{% extends 'survey/base.html' %}
+{% block title %}
+  Опросы
+{% endblock %} 
+{% block content %}
+
+<style>
+.my-custom-link {
+    color: #007bff; 
+    font-weight: bold; 
+  }
+  
+.my-custom-link:hover {
+    text-decoration: underline;
+  }
+</style>
+<h4>В опросе нет вопросов!</h4>
+<div>
+    <a class="my-custom-link me-3 py-2 link-body-emphasis text-decoration-none" href="{% url 'surveys_page' %}">Вернуться к списку опросов</a>
+</div>
+{% endblock %} 
