@@ -1,28 +1,26 @@
-from django.shortcuts import render
 from django.contrib.auth.hashers import make_password, check_password
-from django.http import HttpResponse
-from django.template import loader
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from .forms import LoginForm, RegistrationForm, QuestionResponseForm
-import bcrypt
-from django.contrib.auth.models import AbstractUser, AbstractBaseUser, User
-from django.contrib.auth import authenticate, login, logout
-from psycopg2 import sql
-import psycopg2
-from django.db import connection
+import os
 from datetime import datetime
-from django.shortcuts import render, redirect
+from pathlib import Path
+
+import psycopg2
+from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth.models import User
 from django.db import connection
-from django.utils import timezone
-from .forms import QuestionResponseForm
-from django.http import HttpResponseServerError
-from django.urls import reverse
+from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from django.http import HttpResponseServerError
+from django.shortcuts import render, redirect
+from django.template import loader
+from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 from dotenv import load_dotenv
-from pathlib import Path
-import os
+from psycopg2 import sql
+
+from .forms import LoginForm, RegistrationForm
+from .forms import QuestionResponseForm
 
 
 def load_environment_variables():

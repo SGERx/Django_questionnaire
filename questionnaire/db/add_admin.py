@@ -1,9 +1,10 @@
 import os
-from dotenv import load_dotenv
 from pathlib import Path
+
 import psycopg2
-from django.contrib.auth.hashers import make_password
 from django.conf import settings
+from django.contrib.auth.hashers import make_password
+from dotenv import load_dotenv
 from psycopg2 import sql
 
 

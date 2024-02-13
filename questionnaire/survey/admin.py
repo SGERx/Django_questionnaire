@@ -1,9 +1,9 @@
 from django.contrib import admin
-from .models import Question, QuestionRelation, Survey, UserAnswer
-from django import forms
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
+
 from .forms import MyUserCreationForm
+from .models import Question, QuestionRelation, Survey, UserAnswer
 
 
 @admin.register(Survey)

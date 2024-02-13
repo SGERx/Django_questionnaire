@@ -1,7 +1,5 @@
+from django.contrib.auth.models import User
 from django.db import models
-from django.contrib.auth.models import AbstractUser, AbstractBaseUser, User
-import hashlib
-from django.utils import timezone
 
 
 class Survey(models.Model):
