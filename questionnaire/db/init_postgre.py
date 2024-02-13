@@ -1,12 +1,27 @@
 from django.http import HttpResponse
 import psycopg2
+from dotenv import load_dotenv
+from pathlib import Path
 from psycopg2 import sql
 import os
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
-file_path_tables = os.path.join(os.path.dirname(__file__),
-                                'create_tables.sql')
-database_name = 'questionnaire_postgres'
+
+def load_environment_variables():
+    env_path = Path(__file__).resolve().parent.parent / '.env'
+    print(f"Путь к файлу .env: {env_path}")
+    print(f"Содержимое .env: {open(env_path).read()}")
+    load_dotenv(dotenv_path=env_path)
+
+
+def get_connection_params_from_env():
+    return {
+        'dbname': os.getenv('DB_NAME'),
+        'user': os.getenv('DB_USER'),
+        'password': os.getenv('DB_PASSWORD'),
+        'host': os.getenv('DB_HOST'),
+        'port': os.getenv('DB_PORT')
+    }
 
 
 def execute_db_creation(connection_parameters, database_name):
@@ -325,24 +340,12 @@ def execute_built_in_django_tables_creation(connection_parameters):
         connection.close()
 
 
-connection_parameters = {
-        'dbname': 'questionnaire_postgres',
-        'user': 'postgres',
-        'password': 'root',
-        'host': '127.0.0.1',
-        'port': '5433'
-}
-
-creation_params = {
-        'dbname': 'questionnaire_postgres',
-        'user': 'postgres',
-        'password': 'root',
-        'host': '127.0.0.1',
-        'port': '5433'
-}
-
-
-execute_db_creation(creation_params, database_name)
-execute_built_in_django_tables_creation(connection_parameters)
-execute_custom_tables_creation(connection_parameters)
-execute_index_creation(connection_parameters)
+if __name__ == "__main__":
+    load_environment_variables()
+    connection_parameters = get_connection_params_from_env()
+    creation_params = get_connection_params_from_env()
+    database_name = creation_params['dbname']
+    execute_db_creation(creation_params, database_name)
+    execute_built_in_django_tables_creation(connection_parameters)
+    execute_custom_tables_creation(connection_parameters)
+    execute_index_creation(connection_parameters)
