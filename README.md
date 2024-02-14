@@ -9,6 +9,7 @@
 - Django 4.2.9
 - psycopg2 2.9.9
 - PostgreSQL
+- Базовый HTML+CSS
 
 ### Возможности проекта
 
